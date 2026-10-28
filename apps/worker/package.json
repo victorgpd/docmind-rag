@@ -1,0 +1,27 @@
+{
+  "name": "@docmind/worker",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "dev": "tsx watch --env-file-if-exists=../../.env src/main.ts",
+    "start": "tsx --env-file-if-exists=../../.env src/main.ts",
+    "reindex": "tsx --env-file-if-exists=../../.env src/reindex.ts",
+    "load": "tsx src/load.ts",
+    "build": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@docmind/config": "workspace:*",
+    "@docmind/db": "workspace:*",
+    "@docmind/ingest": "workspace:*",
+    "@docmind/llm": "workspace:*",
+    "@docmind/queue": "workspace:*",
+    "@docmind/shared": "workspace:*",
+    "@docmind/storage": "workspace:*"
+  }
+}

@@ -1,0 +1,1246 @@
+{
+  "stamp": "2026-10-28T21:51:52.981Z",
+  "provider": "openai",
+  "current": {
+    "weights": "0.8/0.1/0.1",
+    "threshold": 0.17
+  },
+  "chosen": {
+    "weights": "0.5/0.4/0.1",
+    "threshold": 0.1,
+    "recall5": 0.9167,
+    "abstention": 1,
+    "falseAbstention": 0.0833,
+    "falseAbstentionGate": 0.0833
+  },
+  "usage": {
+    "embedTokens": 10293,
+    "chatIn": 44604,
+    "chatOut": 1747,
+    "embedCalls": 108,
+    "chatCalls": 90
+  },
+  "usd": 0.00794466,
+  "cells": [
+    {
+      "weights": "0.8/0.1/0.1",
+      "threshold": 0,
+      "recall5": 0.8333,
+      "abstention": 1,
+      "falseAbstention": 0.125,
+      "falseAbstentionGate": 0
+    },
+    {
+      "weights": "0.8/0.1/0.1",
+      "threshold": 0.02,
+      "recall5": 0.8333,
+      "abstention": 1,
+      "falseAbstention": 0.125,
+      "falseAbstentionGate": 0
+    },
+    {
+      "weights": "0.8/0.1/0.1",
+      "threshold": 0.04,
+      "recall5": 0.8333,
+      "abstention": 1,
+      "falseAbstention": 0.125,
+      "falseAbstentionGate": 0
+    },
+    {
+      "weights": "0.8/0.1/0.1",
+      "threshold": 0.06,
+      "recall5": 0.8333,
+      "abstention": 1,
+      "falseAbstention": 0.125,
+      "falseAbstentionGate": 0
+    },
+    {
+      "weights": "0.8/0.1/0.1",
+      "threshold": 0.08,
+      "recall5": 0.8333,
+      "abstention": 1,
+      "falseAbstention": 0.125,
+      "falseAbstentionGate": 0
+    },
+    {
+      "weights": "0.8/0.1/0.1",
+      "threshold": 0.1,
+      "recall5": 0.8333,
+      "abstention": 1,
+      "falseAbstention": 0.2083,
+      "falseAbstentionGate": 0.0833
+    },
+    {
+      "weights": "0.8/0.1/0.1",
+      "threshold": 0.12,
+      "recall5": 0.8333,
+      "abstention": 1,
+      "falseAbstention": 0.25,
+      "falseAbstentionGate": 0.1667
+    },
+    {
+      "weights": "0.8/0.1/0.1",
+      "threshold": 0.14,
+      "recall5": 0.8333,
+      "abstention": 1,
+      "falseAbstention": 0.2917,
+      "falseAbstentionGate": 0.2083
+    },
+    {
+      "weights": "0.8/0.1/0.1",
+      "threshold": 0.16,
+      "recall5": 0.8333,
+      "abstention": 1,
+      "falseAbstention": 0.4167,
+      "falseAbstentionGate": 0.375
+    },
+    {
+      "weights": "0.8/0.1/0.1",
+      "threshold": 0.17,
+      "recall5": 0.8333,
+      "abstention": 1,
+      "falseAbstention": 0.4167,
+      "falseAbstentionGate": 0.375
+    },
+    {
+      "weights": "0.8/0.1/0.1",
+      "threshold": 0.18,
+      "recall5": 0.8333,
+      "abstention": 1,
+      "falseAbstention": 0.5,
+      "falseAbstentionGate": 0.4583
+    },
+    {
+      "weights": "0.8/0.1/0.1",
+      "threshold": 0.2,
+      "recall5": 0.8333,
+      "abstention": 1,
+      "falseAbstention": 0.5,
+      "falseAbstentionGate": 0.4583
+    },
+    {
+      "weights": "0.8/0.1/0.1",
+      "threshold": 0.22,
+      "recall5": 0.8333,
+      "abstention": 1,
+      "falseAbstention": 0.5,
+      "falseAbstentionGate": 0.5
+    },
+    {
+      "weights": "0.8/0.1/0.1",
+      "threshold": 0.24,
+      "recall5": 0.8333,
+      "abstention": 1,
+      "falseAbstention": 0.5833,
+      "falseAbstentionGate": 0.5833
+    },
+    {
+      "weights": "0.8/0.1/0.1",
+      "threshold": 0.26,
+      "recall5": 0.8333,
+      "abstention": 1,
+      "falseAbstention": 0.6667,
+      "falseAbstentionGate": 0.6667
+    },
+    {
+      "weights": "0.8/0.1/0.1",
+      "threshold": 0.28,
+      "recall5": 0.8333,
+      "abstention": 1,
+      "falseAbstention": 0.6667,
+      "falseAbstentionGate": 0.6667
+    },
+    {
+      "weights": "0.8/0.1/0.1",
+      "threshold": 0.3,
+      "recall5": 0.8333,
+      "abstention": 1,
+      "falseAbstention": 0.7083,
+      "falseAbstentionGate": 0.7083
+    },
+    {
+      "weights": "0.5/0.4/0.1",
+      "threshold": 0,
+      "recall5": 0.9167,
+      "abstention": 1,
+      "falseAbstention": 0,
+      "falseAbstentionGate": 0
+    },
+    {
+      "weights": "0.5/0.4/0.1",
+      "threshold": 0.02,
+      "recall5": 0.9167,
+      "abstention": 1,
+      "falseAbstention": 0,
+      "falseAbstentionGate": 0
+    },
+    {
+      "weights": "0.5/0.4/0.1",
+      "threshold": 0.04,
+      "recall5": 0.9167,
+      "abstention": 1,
+      "falseAbstention": 0,
+      "falseAbstentionGate": 0
+    },
+    {
+      "weights": "0.5/0.4/0.1",
+      "threshold": 0.06,
+      "recall5": 0.9167,
+      "abstention": 1,
+      "falseAbstention": 0,
+      "falseAbstentionGate": 0
+    },
+    {
+      "weights": "0.5/0.4/0.1",
+      "threshold": 0.08,
+      "recall5": 0.9167,
+      "abstention": 1,
+      "falseAbstention": 0.0417,
+      "falseAbstentionGate": 0.0417
+    },
+    {
+      "weights": "0.5/0.4/0.1",
+      "threshold": 0.1,
+      "recall5": 0.9167,
+      "abstention": 1,
+      "falseAbstention": 0.0833,
+      "falseAbstentionGate": 0.0833
+    },
+    {
+      "weights": "0.5/0.4/0.1",
+      "threshold": 0.12,
+      "recall5": 0.9167,
+      "abstention": 1,
+      "falseAbstention": 0.1667,
+      "falseAbstentionGate": 0.1667
+    },
+    {
+      "weights": "0.5/0.4/0.1",
+      "threshold": 0.14,
+      "recall5": 0.9167,
+      "abstention": 1,
+      "falseAbstention": 0.3333,
+      "falseAbstentionGate": 0.3333
+    },
+    {
+      "weights": "0.5/0.4/0.1",
+      "threshold": 0.16,
+      "recall5": 0.9167,
+      "abstention": 1,
+      "falseAbstention": 0.4167,
+      "falseAbstentionGate": 0.4167
+    },
+    {
+      "weights": "0.5/0.4/0.1",
+      "threshold": 0.17,
+      "recall5": 0.9167,
+      "abstention": 1,
+      "falseAbstention": 0.4167,
+      "falseAbstentionGate": 0.4167
+    },
+    {
+      "weights": "0.5/0.4/0.1",
+      "threshold": 0.18,
+      "recall5": 0.9167,
+      "abstention": 1,
+      "falseAbstention": 0.4583,
+      "falseAbstentionGate": 0.4583
+    },
+    {
+      "weights": "0.5/0.4/0.1",
+      "threshold": 0.2,
+      "recall5": 0.9167,
+      "abstention": 1,
+      "falseAbstention": 0.4583,
+      "falseAbstentionGate": 0.4583
+    },
+    {
+      "weights": "0.5/0.4/0.1",
+      "threshold": 0.22,
+      "recall5": 0.9167,
+      "abstention": 1,
+      "falseAbstention": 0.5,
+      "falseAbstentionGate": 0.5
+    },
+    {
+      "weights": "0.5/0.4/0.1",
+      "threshold": 0.24,
+      "recall5": 0.9167,
+      "abstention": 1,
+      "falseAbstention": 0.5833,
+      "falseAbstentionGate": 0.5833
+    },
+    {
+      "weights": "0.5/0.4/0.1",
+      "threshold": 0.26,
+      "recall5": 0.9167,
+      "abstention": 1,
+      "falseAbstention": 0.6667,
+      "falseAbstentionGate": 0.6667
+    },
+    {
+      "weights": "0.5/0.4/0.1",
+      "threshold": 0.28,
+      "recall5": 0.9167,
+      "abstention": 1,
+      "falseAbstention": 0.6667,
+      "falseAbstentionGate": 0.6667
+    },
+    {
+      "weights": "0.5/0.4/0.1",
+      "threshold": 0.3,
+      "recall5": 0.9167,
+      "abstention": 1,
+      "falseAbstention": 0.7083,
+      "falseAbstentionGate": 0.7083
+    },
+    {
+      "weights": "0.3/0.6/0.1",
+      "threshold": 0,
+      "recall5": 1,
+      "abstention": 1,
+      "falseAbstention": 0,
+      "falseAbstentionGate": 0
+    },
+    {
+      "weights": "0.3/0.6/0.1",
+      "threshold": 0.02,
+      "recall5": 1,
+      "abstention": 1,
+      "falseAbstention": 0,
+      "falseAbstentionGate": 0
+    },
+    {
+      "weights": "0.3/0.6/0.1",
+      "threshold": 0.04,
+      "recall5": 1,
+      "abstention": 1,
+      "falseAbstention": 0,
+      "falseAbstentionGate": 0
+    },
+    {
+      "weights": "0.3/0.6/0.1",
+      "threshold": 0.06,
+      "recall5": 1,
+      "abstention": 1,
+      "falseAbstention": 0,
+      "falseAbstentionGate": 0
+    },
+    {
+      "weights": "0.3/0.6/0.1",
+      "threshold": 0.08,
+      "recall5": 1,
+      "abstention": 1,
+      "falseAbstention": 0.0417,
+      "falseAbstentionGate": 0.0417
+    },
+    {
+      "weights": "0.3/0.6/0.1",
+      "threshold": 0.1,
+      "recall5": 1,
+      "abstention": 1,
+      "falseAbstention": 0.2083,
+      "falseAbstentionGate": 0.2083
+    },
+    {
+      "weights": "0.3/0.6/0.1",
+      "threshold": 0.12,
+      "recall5": 1,
+      "abstention": 1,
+      "falseAbstention": 0.2917,
+      "falseAbstentionGate": 0.2917
+    },
+    {
+      "weights": "0.3/0.6/0.1",
+      "threshold": 0.14,
+      "recall5": 1,
+      "abstention": 1,
+      "falseAbstention": 0.375,
+      "falseAbstentionGate": 0.375
+    },
+    {
+      "weights": "0.3/0.6/0.1",
+      "threshold": 0.16,
+      "recall5": 1,
+      "abstention": 1,
+      "falseAbstention": 0.5,
+      "falseAbstentionGate": 0.5
+    },
+    {
+      "weights": "0.3/0.6/0.1",
+      "threshold": 0.17,
+      "recall5": 1,
+      "abstention": 1,
+      "falseAbstention": 0.5,
+      "falseAbstentionGate": 0.5
+    },
+    {
+      "weights": "0.3/0.6/0.1",
+      "threshold": 0.18,
+      "recall5": 1,
+      "abstention": 1,
+      "falseAbstention": 0.5,
+      "falseAbstentionGate": 0.5
+    },
+    {
+      "weights": "0.3/0.6/0.1",
+      "threshold": 0.2,
+      "recall5": 1,
+      "abstention": 1,
+      "falseAbstention": 0.5,
+      "falseAbstentionGate": 0.5
+    },
+    {
+      "weights": "0.3/0.6/0.1",
+      "threshold": 0.22,
+      "recall5": 1,
+      "abstention": 1,
+      "falseAbstention": 0.5417,
+      "falseAbstentionGate": 0.5417
+    },
+    {
+      "weights": "0.3/0.6/0.1",
+      "threshold": 0.24,
+      "recall5": 1,
+      "abstention": 1,
+      "falseAbstention": 0.625,
+      "falseAbstentionGate": 0.625
+    },
+    {
+      "weights": "0.3/0.6/0.1",
+      "threshold": 0.26,
+      "recall5": 1,
+      "abstention": 1,
+      "falseAbstention": 0.6667,
+      "falseAbstentionGate": 0.6667
+    },
+    {
+      "weights": "0.3/0.6/0.1",
+      "threshold": 0.28,
+      "recall5": 1,
+      "abstention": 1,
+      "falseAbstention": 0.6667,
+      "falseAbstentionGate": 0.6667
+    },
+    {
+      "weights": "0.3/0.6/0.1",
+      "threshold": 0.3,
+      "recall5": 1,
+      "abstention": 1,
+      "falseAbstention": 0.7083,
+      "falseAbstentionGate": 0.7083
+    }
+  ],
+  "rows": [
+    {
+      "id": "c01",
+      "weights": "0.8/0.1/0.1",
+      "category": "parafrase",
+      "rank": 1,
+      "relevance": 0.1453558171819765,
+      "llmAbstained": false,
+      "answer": "A sessão da VPN expira após 8 horas de conexão contínua. Depois disso, o usuário precisa se autenticar novamente [1]."
+    },
+    {
+      "id": "c02",
+      "weights": "0.8/0.1/0.1",
+      "category": "parafrase",
+      "rank": 1,
+      "relevance": 0.10542663459993816,
+      "llmAbstained": false,
+      "answer": "Não, dispositivos pessoais não têm permissão para conectar à VPN [1]."
+    },
+    {
+      "id": "c03",
+      "weights": "0.8/0.1/0.1",
+      "category": "parafrase",
+      "rank": 1,
+      "relevance": 0.2323512442099106,
+      "llmAbstained": false,
+      "answer": "A penalidade cobrada pela consultoria em caso de atraso no pagamento da mensalidade é uma multa de 2% e juros de 1% ao mês [1]."
+    },
+    {
+      "id": "c04",
+      "weights": "0.8/0.1/0.1",
+      "category": "parafrase",
+      "rank": 5,
+      "relevance": 0.17666925573328607,
+      "llmAbstained": false,
+      "answer": "Um funcionário que acabou de ter um filho pode contar com 20 dias corridos de licença-paternidade [5]."
+    },
+    {
+      "id": "c05",
+      "weights": "0.8/0.1/0.1",
+      "category": "parafrase",
+      "rank": 2,
+      "relevance": 0.1742635566919536,
+      "llmAbstained": false,
+      "answer": "As cópias de segurança dos servidores de produção são mantidas por 35 dias [2]."
+    },
+    {
+      "id": "c06",
+      "weights": "0.8/0.1/0.1",
+      "category": "parafrase",
+      "rank": 0,
+      "relevance": 0.14472085565597445,
+      "llmAbstained": true,
+      "answer": "Não encontrei a informação."
+    },
+    {
+      "id": "c07",
+      "weights": "0.8/0.1/0.1",
+      "category": "parafrase",
+      "rank": 0,
+      "relevance": 0.11019841394314198,
+      "llmAbstained": true,
+      "answer": "Não encontrei a informação."
+    },
+    {
+      "id": "c08",
+      "weights": "0.8/0.1/0.1",
+      "category": "parafrase",
+      "rank": 0,
+      "relevance": 0.08236074673588317,
+      "llmAbstained": false,
+      "answer": "Seu chefe precisa dar uma resposta em até 5 dias úteis para aprovar ou recusar o pedido de férias [1]."
+    },
+    {
+      "id": "c09",
+      "weights": "0.8/0.1/0.1",
+      "category": "parafrase",
+      "rank": 3,
+      "relevance": 0.08989090102209155,
+      "llmAbstained": false,
+      "answer": "O novo colaborador é acompanhado por um mentor durante os primeiros 90 dias. O mentor é escolhido pelo gestor entre colaboradores com mais de 2 anos de casa [3]."
+    },
+    {
+      "id": "c10",
+      "weights": "0.8/0.1/0.1",
+      "category": "parafrase",
+      "rank": 1,
+      "relevance": 0.15469038087875703,
+      "llmAbstained": false,
+      "answer": "Você é obrigado a mudar sua senha a cada 180 dias [1]."
+    },
+    {
+      "id": "c11",
+      "weights": "0.8/0.1/0.1",
+      "category": "sinonimo_sigla",
+      "rank": 4,
+      "relevance": 0.1270369560174538,
+      "llmAbstained": false,
+      "answer": "O reajuste anual do valor mensal segue a variação do IPCA acumulada nos 12 meses anteriores [4]."
+    },
+    {
+      "id": "c12",
+      "weights": "0.8/0.1/0.1",
+      "category": "sinonimo_sigla",
+      "rank": 1,
+      "relevance": 0.28258906271659334,
+      "llmAbstained": false,
+      "answer": "O SLA para chamados críticos da Brisa Consultoria é de até 4 horas. Para chamados comuns, o SLA é de até 2 dias úteis [1]."
+    },
+    {
+      "id": "c13",
+      "weights": "0.8/0.1/0.1",
+      "category": "sinonimo_sigla",
+      "rank": 0,
+      "relevance": 0.20395683363618933,
+      "llmAbstained": true,
+      "answer": "Não encontrei a informação."
+    },
+    {
+      "id": "c14",
+      "weights": "0.8/0.1/0.1",
+      "category": "sinonimo_sigla",
+      "rank": 1,
+      "relevance": 0.25897596294672515,
+      "llmAbstained": false,
+      "answer": "O vale-refeição é creditado no valor de R$ 38,00 por dia útil [1]."
+    },
+    {
+      "id": "c15",
+      "weights": "0.8/0.1/0.1",
+      "category": "sinonimo_sigla",
+      "rank": 2,
+      "relevance": 0.1548777141833506,
+      "llmAbstained": false,
+      "answer": "O registro da empresa no cadastro nacional de pessoas jurídicas para emitir as notas é o CNPJ 12.345.678/0001-90 [2]."
+    },
+    {
+      "id": "c16",
+      "weights": "0.8/0.1/0.1",
+      "category": "sinonimo_sigla",
+      "rank": 4,
+      "relevance": 0.22949811292697136,
+      "llmAbstained": false,
+      "answer": "Um funcionário com carteira assinada tem direito a 30 dias corridos de férias após cada período de 12 meses de trabalho [4]."
+    },
+    {
+      "id": "c17",
+      "weights": "0.8/0.1/0.1",
+      "category": "nome_proprio",
+      "rank": 3,
+      "relevance": 0.31358255470974944,
+      "llmAbstained": false,
+      "answer": "As disputas do contrato com a Brisa Consultoria serão resolvidas na comarca de Curitiba [3]."
+    },
+    {
+      "id": "c18",
+      "weights": "0.8/0.1/0.1",
+      "category": "nome_proprio",
+      "rank": 1,
+      "relevance": 0.2459084933419087,
+      "llmAbstained": false,
+      "answer": "O WireGuard pode ser instalado somente no notebook da empresa, pois dispositivos pessoais não têm permissão para conectar à VPN. [1]"
+    },
+    {
+      "id": "c19",
+      "weights": "0.8/0.1/0.1",
+      "category": "nome_proprio",
+      "rank": 1,
+      "relevance": 0.5170316612995569,
+      "llmAbstained": false,
+      "answer": "A licença-maternidade na Nimbus Têxtil dura 180 dias [1]."
+    },
+    {
+      "id": "c20",
+      "weights": "0.8/0.1/0.1",
+      "category": "nome_proprio",
+      "rank": 1,
+      "relevance": 0.3362017160608558,
+      "llmAbstained": false,
+      "answer": "A solicitação de férias deve ser feita no sistema Pessoas com antecedência mínima de 45 dias [1]."
+    },
+    {
+      "id": "c21",
+      "weights": "0.8/0.1/0.1",
+      "category": "literal",
+      "rank": 1,
+      "relevance": 0.39929985008181995,
+      "llmAbstained": false,
+      "answer": "O teto da diária de hotel nas capitais é de R$ 450,00 [1]."
+    },
+    {
+      "id": "c22",
+      "weights": "0.8/0.1/0.1",
+      "category": "literal",
+      "rank": 1,
+      "relevance": 0.5974579478738069,
+      "llmAbstained": false,
+      "answer": "O limite diário para alimentação em viagens nacionais é de R$ 120,00 por pessoa [1]."
+    },
+    {
+      "id": "c23",
+      "weights": "0.8/0.1/0.1",
+      "category": "literal",
+      "rank": 1,
+      "relevance": 0.6372142923572838,
+      "llmAbstained": false,
+      "answer": "A cor do crachá dos visitantes é laranja [1]."
+    },
+    {
+      "id": "c24",
+      "weights": "0.8/0.1/0.1",
+      "category": "literal",
+      "rank": 1,
+      "relevance": 0.31639676216567486,
+      "llmAbstained": false,
+      "answer": "O período de experiência é de 45 dias, prorrogável por mais 45 dias [1]."
+    },
+    {
+      "id": "c25",
+      "weights": "0.8/0.1/0.1",
+      "category": "sem_resposta",
+      "rank": 0,
+      "relevance": 0.13719915776636699,
+      "llmAbstained": true,
+      "answer": "Não encontrei a informação."
+    },
+    {
+      "id": "c26",
+      "weights": "0.8/0.1/0.1",
+      "category": "sem_resposta",
+      "rank": 0,
+      "relevance": 0.4598858595938049,
+      "llmAbstained": true,
+      "answer": "Não encontrei a informação."
+    },
+    {
+      "id": "c27",
+      "weights": "0.8/0.1/0.1",
+      "category": "sem_resposta",
+      "rank": 0,
+      "relevance": 0.14591220094502755,
+      "llmAbstained": true,
+      "answer": "Não encontrei a informação."
+    },
+    {
+      "id": "c28",
+      "weights": "0.8/0.1/0.1",
+      "category": "sem_resposta",
+      "rank": 0,
+      "relevance": 0.19974462145674532,
+      "llmAbstained": true,
+      "answer": "Não encontrei a informação."
+    },
+    {
+      "id": "c29",
+      "weights": "0.8/0.1/0.1",
+      "category": "sem_resposta",
+      "rank": 0,
+      "relevance": 0.2146361416698886,
+      "llmAbstained": true,
+      "answer": "Não encontrei a informação."
+    },
+    {
+      "id": "c30",
+      "weights": "0.8/0.1/0.1",
+      "category": "sem_resposta",
+      "rank": 0,
+      "relevance": 0.23702264003536577,
+      "llmAbstained": true,
+      "answer": "Não encontrei a informação."
+    },
+    {
+      "id": "c01",
+      "weights": "0.5/0.4/0.1",
+      "category": "parafrase",
+      "rank": 1,
+      "relevance": 0.1453558171819765,
+      "llmAbstained": false,
+      "answer": "A sessão da VPN expira após 8 horas de conexão contínua. Depois disso, o usuário precisa se autenticar novamente [1]."
+    },
+    {
+      "id": "c02",
+      "weights": "0.5/0.4/0.1",
+      "category": "parafrase",
+      "rank": 1,
+      "relevance": 0.10542663459993816,
+      "llmAbstained": false,
+      "answer": "Não, dispositivos pessoais não têm permissão para conectar à VPN [1]."
+    },
+    {
+      "id": "c03",
+      "weights": "0.5/0.4/0.1",
+      "category": "parafrase",
+      "rank": 1,
+      "relevance": 0.2323512442099106,
+      "llmAbstained": false,
+      "answer": "A penalidade cobrada pela consultoria em caso de atraso no pagamento da mensalidade é uma multa de 2% e juros de 1% ao mês [1]."
+    },
+    {
+      "id": "c04",
+      "weights": "0.5/0.4/0.1",
+      "category": "parafrase",
+      "rank": 3,
+      "relevance": 0.17666925573328607,
+      "llmAbstained": false,
+      "answer": "Um funcionário que acabou de ter um filho pode contar com 20 dias corridos de licença-paternidade [3]."
+    },
+    {
+      "id": "c05",
+      "weights": "0.5/0.4/0.1",
+      "category": "parafrase",
+      "rank": 1,
+      "relevance": 0.1354088313660059,
+      "llmAbstained": false,
+      "answer": "As cópias de segurança dos servidores ficam guardadas por 35 dias [1]."
+    },
+    {
+      "id": "c06",
+      "weights": "0.5/0.4/0.1",
+      "category": "parafrase",
+      "rank": 3,
+      "relevance": 0.13043987294222573,
+      "llmAbstained": false,
+      "answer": "O suporte de TI atende de segunda a sexta, das 8h às 18h [3]."
+    },
+    {
+      "id": "c07",
+      "weights": "0.5/0.4/0.1",
+      "category": "parafrase",
+      "rank": 0,
+      "relevance": 0.11019841394314198,
+      "llmAbstained": false,
+      "answer": "A empresa paga R$ 0,90 por quilômetro rodado em viagens a trabalho [5]."
+    },
+    {
+      "id": "c08",
+      "weights": "0.5/0.4/0.1",
+      "category": "parafrase",
+      "rank": 3,
+      "relevance": 0.08236074673588317,
+      "llmAbstained": false,
+      "answer": "Seu chefe tem 5 dias úteis para aprovar ou recusar o pedido de férias [1]."
+    },
+    {
+      "id": "c09",
+      "weights": "0.5/0.4/0.1",
+      "category": "parafrase",
+      "rank": 1,
+      "relevance": 0.0669049345734443,
+      "llmAbstained": false,
+      "answer": "O novo colaborador é acompanhado por um mentor durante os primeiros 90 dias. O mentor é escolhido pelo gestor entre colaboradores com mais de 2 anos de casa [1]."
+    },
+    {
+      "id": "c10",
+      "weights": "0.5/0.4/0.1",
+      "category": "parafrase",
+      "rank": 1,
+      "relevance": 0.15469038087875703,
+      "llmAbstained": false,
+      "answer": "Você é obrigado a mudar sua senha a cada 180 dias [1]."
+    },
+    {
+      "id": "c11",
+      "weights": "0.5/0.4/0.1",
+      "category": "sinonimo_sigla",
+      "rank": 2,
+      "relevance": 0.1270369560174538,
+      "llmAbstained": false,
+      "answer": "O reajuste anual do valor mensal segue a variação do IPCA acumulada nos 12 meses anteriores [2]."
+    },
+    {
+      "id": "c12",
+      "weights": "0.5/0.4/0.1",
+      "category": "sinonimo_sigla",
+      "rank": 1,
+      "relevance": 0.28258906271659334,
+      "llmAbstained": false,
+      "answer": "O SLA para chamados críticos da Brisa Consultoria é de até 4 horas. [1]"
+    },
+    {
+      "id": "c13",
+      "weights": "0.5/0.4/0.1",
+      "category": "sinonimo_sigla",
+      "rank": 6,
+      "relevance": 0.20395683363618933,
+      "llmAbstained": false,
+      "answer": "A autenticação para logar na VPN exige uma senha e um segundo fator gerado pelo aplicativo autenticador. Códigos por SMS foram descontinuados em 2024 por serem considerados inseguros [6]."
+    },
+    {
+      "id": "c14",
+      "weights": "0.5/0.4/0.1",
+      "category": "sinonimo_sigla",
+      "rank": 1,
+      "relevance": 0.25897596294672515,
+      "llmAbstained": false,
+      "answer": "O vale-refeição é creditado no valor de R$ 38,00 por dia útil [1]."
+    },
+    {
+      "id": "c15",
+      "weights": "0.5/0.4/0.1",
+      "category": "sinonimo_sigla",
+      "rank": 1,
+      "relevance": 0.12215874552931325,
+      "llmAbstained": false,
+      "answer": "O registro da empresa no cadastro nacional de pessoas jurídicas para emitir as notas é o CNPJ 12.345.678/0001-90 [1]."
+    },
+    {
+      "id": "c16",
+      "weights": "0.5/0.4/0.1",
+      "category": "sinonimo_sigla",
+      "rank": 4,
+      "relevance": 0.22949811292697136,
+      "llmAbstained": false,
+      "answer": "Um colaborador CLT tem direito a 30 dias corridos de férias após cada período de 12 meses de trabalho [4]."
+    },
+    {
+      "id": "c17",
+      "weights": "0.5/0.4/0.1",
+      "category": "nome_proprio",
+      "rank": 2,
+      "relevance": 0.31358255470974944,
+      "llmAbstained": false,
+      "answer": "As disputas do contrato com a Brisa Consultoria serão resolvidas na comarca de Curitiba [2]."
+    },
+    {
+      "id": "c18",
+      "weights": "0.5/0.4/0.1",
+      "category": "nome_proprio",
+      "rank": 1,
+      "relevance": 0.2459084933419087,
+      "llmAbstained": false,
+      "answer": "O WireGuard pode ser instalado somente no notebook da empresa, pois dispositivos pessoais não têm permissão para conectar à VPN [1]."
+    },
+    {
+      "id": "c19",
+      "weights": "0.5/0.4/0.1",
+      "category": "nome_proprio",
+      "rank": 1,
+      "relevance": 0.5170316612995569,
+      "llmAbstained": false,
+      "answer": "A licença-maternidade na Nimbus Têxtil é de 180 dias [1]."
+    },
+    {
+      "id": "c20",
+      "weights": "0.5/0.4/0.1",
+      "category": "nome_proprio",
+      "rank": 1,
+      "relevance": 0.3362017160608558,
+      "llmAbstained": false,
+      "answer": "A solicitação de férias deve ser feita no sistema Pessoas com antecedência mínima de 45 dias [1]."
+    },
+    {
+      "id": "c21",
+      "weights": "0.5/0.4/0.1",
+      "category": "literal",
+      "rank": 1,
+      "relevance": 0.39929985008181995,
+      "llmAbstained": false,
+      "answer": "O teto da diária de hotel nas capitais é de R$ 450,00 [1]."
+    },
+    {
+      "id": "c22",
+      "weights": "0.5/0.4/0.1",
+      "category": "literal",
+      "rank": 1,
+      "relevance": 0.5974579478738069,
+      "llmAbstained": false,
+      "answer": "O limite diário para alimentação em viagens nacionais é de R$ 120,00 por pessoa [1]."
+    },
+    {
+      "id": "c23",
+      "weights": "0.5/0.4/0.1",
+      "category": "literal",
+      "rank": 1,
+      "relevance": 0.6372142923572838,
+      "llmAbstained": false,
+      "answer": "A cor do crachá dos visitantes é laranja [1]."
+    },
+    {
+      "id": "c24",
+      "weights": "0.5/0.4/0.1",
+      "category": "literal",
+      "rank": 1,
+      "relevance": 0.31639676216567486,
+      "llmAbstained": false,
+      "answer": "O período de experiência é de 45 dias, prorrogável por mais 45 dias [1]."
+    },
+    {
+      "id": "c25",
+      "weights": "0.5/0.4/0.1",
+      "category": "sem_resposta",
+      "rank": 0,
+      "relevance": 0.13719915776636699,
+      "llmAbstained": true,
+      "answer": "Não encontrei a informação."
+    },
+    {
+      "id": "c26",
+      "weights": "0.5/0.4/0.1",
+      "category": "sem_resposta",
+      "rank": 0,
+      "relevance": 0.4598858595938049,
+      "llmAbstained": true,
+      "answer": "Não encontrei a informação."
+    },
+    {
+      "id": "c27",
+      "weights": "0.5/0.4/0.1",
+      "category": "sem_resposta",
+      "rank": 0,
+      "relevance": 0.14591220094502755,
+      "llmAbstained": true,
+      "answer": "Não encontrei a informação."
+    },
+    {
+      "id": "c28",
+      "weights": "0.5/0.4/0.1",
+      "category": "sem_resposta",
+      "rank": 0,
+      "relevance": 0.19974462145674532,
+      "llmAbstained": true,
+      "answer": "Não encontrei a informação."
+    },
+    {
+      "id": "c29",
+      "weights": "0.5/0.4/0.1",
+      "category": "sem_resposta",
+      "rank": 0,
+      "relevance": 0.2146361416698886,
+      "llmAbstained": true,
+      "answer": "Não encontrei a informação."
+    },
+    {
+      "id": "c30",
+      "weights": "0.5/0.4/0.1",
+      "category": "sem_resposta",
+      "rank": 0,
+      "relevance": 0.23702264003536577,
+      "llmAbstained": true,
+      "answer": "Não encontrei a informação."
+    },
+    {
+      "id": "c01",
+      "weights": "0.3/0.6/0.1",
+      "category": "parafrase",
+      "rank": 1,
+      "relevance": 0.1453558171819765,
+      "llmAbstained": false,
+      "answer": "A sessão da VPN expira após 8 horas de conexão contínua. Depois disso, o usuário precisa se autenticar novamente [1]."
+    },
+    {
+      "id": "c02",
+      "weights": "0.3/0.6/0.1",
+      "category": "parafrase",
+      "rank": 1,
+      "relevance": 0.10542663459993816,
+      "llmAbstained": false,
+      "answer": "Não, dispositivos pessoais não têm permissão para conectar à VPN [1]."
+    },
+    {
+      "id": "c03",
+      "weights": "0.3/0.6/0.1",
+      "category": "parafrase",
+      "rank": 1,
+      "relevance": 0.2323512442099106,
+      "llmAbstained": false,
+      "answer": "A penalidade cobrada pela consultoria em caso de atraso no pagamento da mensalidade é uma multa de 2% e juros de 1% ao mês [1]."
+    },
+    {
+      "id": "c04",
+      "weights": "0.3/0.6/0.1",
+      "category": "parafrase",
+      "rank": 2,
+      "relevance": 0.1516713804512123,
+      "llmAbstained": false,
+      "answer": "Um funcionário que acabou de ter um filho pode contar com 20 dias corridos de licença-paternidade [2]."
+    },
+    {
+      "id": "c05",
+      "weights": "0.3/0.6/0.1",
+      "category": "parafrase",
+      "rank": 1,
+      "relevance": 0.1354088313660059,
+      "llmAbstained": false,
+      "answer": "As cópias de segurança dos servidores ficam guardadas por 35 dias [1]."
+    },
+    {
+      "id": "c06",
+      "weights": "0.3/0.6/0.1",
+      "category": "parafrase",
+      "rank": 1,
+      "relevance": 0.08448109532870902,
+      "llmAbstained": false,
+      "answer": "Você pode ligar para o suporte técnico durante a semana até às 18h, de segunda a sexta-feira [1]."
+    },
+    {
+      "id": "c07",
+      "weights": "0.3/0.6/0.1",
+      "category": "parafrase",
+      "rank": 4,
+      "relevance": 0.11019841394314198,
+      "llmAbstained": false,
+      "answer": "A empresa paga R$ 0,90 por quilômetro rodado. [2]"
+    },
+    {
+      "id": "c08",
+      "weights": "0.3/0.6/0.1",
+      "category": "parafrase",
+      "rank": 2,
+      "relevance": 0.08236074673588317,
+      "llmAbstained": false,
+      "answer": "Seu chefe tem 5 dias úteis para aprovar ou recusar o pedido de férias [1]."
+    },
+    {
+      "id": "c09",
+      "weights": "0.3/0.6/0.1",
+      "category": "parafrase",
+      "rank": 1,
+      "relevance": 0.0669049345734443,
+      "llmAbstained": false,
+      "answer": "O novo colaborador é acompanhado por um mentor durante os primeiros 90 dias [1]."
+    },
+    {
+      "id": "c10",
+      "weights": "0.3/0.6/0.1",
+      "category": "parafrase",
+      "rank": 1,
+      "relevance": 0.15469038087875703,
+      "llmAbstained": false,
+      "answer": "Você é obrigado a mudar sua senha a cada 180 dias [1]."
+    },
+    {
+      "id": "c11",
+      "weights": "0.3/0.6/0.1",
+      "category": "sinonimo_sigla",
+      "rank": 1,
+      "relevance": 0.09516695554938259,
+      "llmAbstained": false,
+      "answer": "O reajuste anual do valor mensal segue a variação do IPCA acumulada nos 12 meses anteriores [1]."
+    },
+    {
+      "id": "c12",
+      "weights": "0.3/0.6/0.1",
+      "category": "sinonimo_sigla",
+      "rank": 1,
+      "relevance": 0.28258906271659334,
+      "llmAbstained": false,
+      "answer": "O SLA para chamados críticos da Brisa Consultoria é de até 4 horas. [1]"
+    },
+    {
+      "id": "c13",
+      "weights": "0.3/0.6/0.1",
+      "category": "sinonimo_sigla",
+      "rank": 4,
+      "relevance": 0.20395683363618933,
+      "llmAbstained": false,
+      "answer": "A autenticação para logar na VPN exige uma senha e um segundo fator gerado pelo aplicativo autenticador. Códigos por SMS foram descontinuados em 2024 por serem considerados inseguros [4]."
+    },
+    {
+      "id": "c14",
+      "weights": "0.3/0.6/0.1",
+      "category": "sinonimo_sigla",
+      "rank": 3,
+      "relevance": 0.08608923438235368,
+      "llmAbstained": false,
+      "answer": "O vale-refeição é creditado todo dia 25, no valor de R$ 38,00 por dia útil [3]."
+    },
+    {
+      "id": "c15",
+      "weights": "0.3/0.6/0.1",
+      "category": "sinonimo_sigla",
+      "rank": 1,
+      "relevance": 0.12215874552931325,
+      "llmAbstained": false,
+      "answer": "O registro da empresa no cadastro nacional de pessoas jurídicas para emitir as notas é o CNPJ 12.345.678/0001-90 [1]."
+    },
+    {
+      "id": "c16",
+      "weights": "0.3/0.6/0.1",
+      "category": "sinonimo_sigla",
+      "rank": 4,
+      "relevance": 0.22949811292697136,
+      "llmAbstained": false,
+      "answer": "Todo colaborador CLT tem direito a 30 dias corridos de férias após cada período de 12 meses de trabalho [4]."
+    },
+    {
+      "id": "c17",
+      "weights": "0.3/0.6/0.1",
+      "category": "nome_proprio",
+      "rank": 2,
+      "relevance": 0.31358255470974944,
+      "llmAbstained": false,
+      "answer": "As disputas do contrato com a Brisa Consultoria serão resolvidas na comarca de Curitiba [2]."
+    },
+    {
+      "id": "c18",
+      "weights": "0.3/0.6/0.1",
+      "category": "nome_proprio",
+      "rank": 1,
+      "relevance": 0.2459084933419087,
+      "llmAbstained": false,
+      "answer": "O WireGuard pode ser instalado somente no notebook da empresa, pois dispositivos pessoais não têm permissão para conectar à VPN [1]."
+    },
+    {
+      "id": "c19",
+      "weights": "0.3/0.6/0.1",
+      "category": "nome_proprio",
+      "rank": 1,
+      "relevance": 0.5170316612995569,
+      "llmAbstained": false,
+      "answer": "A licença-maternidade da Nimbus Têxtil é de 180 dias. [1]"
+    },
+    {
+      "id": "c20",
+      "weights": "0.3/0.6/0.1",
+      "category": "nome_proprio",
+      "rank": 1,
+      "relevance": 0.3362017160608558,
+      "llmAbstained": false,
+      "answer": "A solicitação de férias deve ser feita no sistema Pessoas com antecedência mínima de 45 dias [1]."
+    },
+    {
+      "id": "c21",
+      "weights": "0.3/0.6/0.1",
+      "category": "literal",
+      "rank": 1,
+      "relevance": 0.39929985008181995,
+      "llmAbstained": false,
+      "answer": "O teto da diária de hotel nas capitais é de R$ 450,00 [1]."
+    },
+    {
+      "id": "c22",
+      "weights": "0.3/0.6/0.1",
+      "category": "literal",
+      "rank": 1,
+      "relevance": 0.5974579478738069,
+      "llmAbstained": false,
+      "answer": "O limite diário para alimentação em viagens nacionais é de R$ 120,00 por pessoa [1]."
+    },
+    {
+      "id": "c23",
+      "weights": "0.3/0.6/0.1",
+      "category": "literal",
+      "rank": 1,
+      "relevance": 0.6372142923572838,
+      "llmAbstained": false,
+      "answer": "A cor do crachá dos visitantes é laranja [1]."
+    },
+    {
+      "id": "c24",
+      "weights": "0.3/0.6/0.1",
+      "category": "literal",
+      "rank": 1,
+      "relevance": 0.31639676216567486,
+      "llmAbstained": false,
+      "answer": "O período de experiência é de 45 dias, prorrogável por mais 45 dias [1]."
+    },
+    {
+      "id": "c25",
+      "weights": "0.3/0.6/0.1",
+      "category": "sem_resposta",
+      "rank": 0,
+      "relevance": 0.13719915776636699,
+      "llmAbstained": true,
+      "answer": "Não encontrei a informação."
+    },
+    {
+      "id": "c26",
+      "weights": "0.3/0.6/0.1",
+      "category": "sem_resposta",
+      "rank": 0,
+      "relevance": 0.4598858595938049,
+      "llmAbstained": true,
+      "answer": "Não encontrei a informação."
+    },
+    {
+      "id": "c27",
+      "weights": "0.3/0.6/0.1",
+      "category": "sem_resposta",
+      "rank": 0,
+      "relevance": 0.09802537833107486,
+      "llmAbstained": true,
+      "answer": "Não encontrei a informação."
+    },
+    {
+      "id": "c28",
+      "weights": "0.3/0.6/0.1",
+      "category": "sem_resposta",
+      "rank": 0,
+      "relevance": 0.19974462145674532,
+      "llmAbstained": true,
+      "answer": "Não encontrei a informação."
+    },
+    {
+      "id": "c29",
+      "weights": "0.3/0.6/0.1",
+      "category": "sem_resposta",
+      "rank": 0,
+      "relevance": 0.2146361416698886,
+      "llmAbstained": true,
+      "answer": "Não encontrei a informação."
+    },
+    {
+      "id": "c30",
+      "weights": "0.3/0.6/0.1",
+      "category": "sem_resposta",
+      "rank": 0,
+      "relevance": 0.23702264003536577,
+      "llmAbstained": true,
+      "answer": "Não encontrei a informação."
+    }
+  ]
+}

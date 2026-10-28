@@ -1,0 +1,13 @@
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "paths": {
+      "@docmind/db": ["../packages/db/src/index.ts"],
+      "@docmind/llm": ["../packages/llm/src/index.ts"],
+      "@docmind/ingest": ["../packages/ingest/src/index.ts"],
+      "@docmind/retrieval": ["../packages/retrieval/src/index.ts"],
+      "@docmind/agent": ["../packages/agent/src/index.ts"]
+    }
+  },
+  "include": ["src", "vitest.config.ts"]
+}

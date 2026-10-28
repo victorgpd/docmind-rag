@@ -1,0 +1,12 @@
+[
+ { "id": "a01", "tool": "search", "query": "Qual o limite diário para alimentação em viagens nacionais?", "steps": ["search"], "maxSteps": 2, "facts": ["120"] },
+ { "id": "a02", "tool": "search", "query": "Em quanto tempo devo avisar a Segurança se perder o notebook?", "steps": ["search"], "maxSteps": 2, "facts": ["1 hora"] },
+ { "id": "a03", "tool": "search", "query": "Qual o foro eleito no contrato com a Brisa Consultoria?", "steps": ["search"], "maxSteps": 2, "facts": ["Curitiba"] },
+ { "id": "a04", "tool": "summarize", "query": "Resuma o guia de onboarding", "docs": ["onboarding.md"], "steps": ["summarize"], "maxSteps": 2, "facts": ["notebook"] },
+ { "id": "a05", "tool": "summarize", "query": "Faça um resumo da política de férias e licenças", "steps": ["search", "summarize"], "maxSteps": 3, "facts": ["30 dias"] },
+ { "id": "a06", "tool": "compare", "query": "Compare a política de férias com o guia de onboarding", "docs": ["ferias-licencas.md", "onboarding.md"], "steps": ["compare"], "maxSteps": 2, "facts": ["30 dias", "notebook"] },
+ { "id": "a07", "tool": "compare", "query": "Quais as diferenças entre o acesso remoto e a norma de segurança?", "docs": ["acesso-remoto.md", "seguranca-informacao.md"], "steps": ["compare"], "maxSteps": 2, "facts": ["VPN", "14 caracteres"] },
+ { "id": "a08", "tool": "extract_table", "query": "Extraia a tabela de preços", "docs": ["tabela-precos.md"], "steps": ["extract_table"], "maxSteps": 2, "table": { "headers": ["Produto", "Preço", "Estoque"], "row": ["Caneta azul", "3,50", "120"], "rows": 4 } },
+ { "id": "a09", "tool": "extract_table", "query": "Extraia a tabela de preços de material de escritório", "steps": ["search", "extract_table"], "maxSteps": 3, "table": { "headers": ["Produto", "Preço", "Estoque"], "row": ["Caneta azul", "3,50", "120"], "rows": 4 } },
+ { "id": "a10", "tool": "search", "query": "Qual é a capital da Austrália?", "steps": ["search"], "maxSteps": 2, "abstain": true }
+]

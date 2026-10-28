@@ -1,0 +1,32 @@
+{
+  "name": "@docmind/tests",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "demo": "playwright test -c playwright.demo.config.ts",
+    "video": "playwright test -c playwright.video.config.ts"
+  },
+  "dependencies": {
+    "@docmind/config": "workspace:*",
+    "@docmind/db": "workspace:*",
+    "@docmind/llm": "workspace:*",
+    "@docmind/queue": "workspace:*",
+    "@docmind/retrieval": "workspace:*",
+    "@docmind/security": "workspace:*",
+    "@docmind/shared": "workspace:*",
+    "@docmind/storage": "workspace:*",
+    "express": "^5.1.0"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
+    "@playwright/test": "^1.49.0",
+    "@types/express": "^5.0.0",
+    "@types/supertest": "^6.0.2",
+    "mermaid": "^12.2.0",
+    "supertest": "^7.0.0"
+  }
+}

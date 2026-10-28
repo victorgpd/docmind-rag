@@ -1,0 +1,62 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Fonte Inter variável, só o subset latin, auto-hospedada (CSP font-src 'self'). */
+@font-face {
+  font-family: "Inter Variable";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url("../node_modules/@fontsource-variable/inter/files/inter-latin-wght-normal.woff2") format("woff2-variations");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* Design tokens v2 (ver docs/DESIGN.md): fundo tingido, superfícies elevadas, UM acento índigo→violeta. */
+:root {
+  --bg: #f6f7fb; --surface: #ffffff; --subtle: #eef0f7;
+  --fg: #12141c; --muted: #5b6173;
+  --line: #e3e6ef; --line-strong: #7c8296; /* line-strong: 3:1 em bordas de campos (WCAG 1.4.11) */
+  --brand: #4f46e5; --brand-fg: #ffffff; --tint: rgba(79, 70, 229, 0.09); /* brand = acento legível como texto/foco */
+  --primary: #4f46e5; --primary-fg: #ffffff;
+  --grad: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); /* só botão primário, logo e destaques */
+  --danger: #b42318; --ok: #176437; --warn: #7a4f00;
+  --shadow-card: 0 1px 2px rgba(18, 20, 28, 0.04);
+  --shadow-lift: 0 8px 24px rgba(18, 20, 28, 0.08);
+}
+.dark {
+  --bg: #0b0d14; --surface: #12151f; --subtle: #1a1e2b;
+  --fg: #eceef6; --muted: #9aa1b5;
+  --line: #232838; --line-strong: #6b7288;
+  --brand: #a5b0ff; --brand-fg: #0b0d14; --tint: rgba(139, 148, 255, 0.14);
+  --primary: #5a5ee8; --primary-fg: #ffffff;
+  --grad: linear-gradient(135deg, #5a5ee8 0%, #7c4ddb 100%);
+  --danger: #ff8a80; --ok: #7bc08f; --warn: #e0b04a;
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-lift: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+@theme inline {
+  --color-bg: var(--bg); --color-surface: var(--surface); --color-subtle: var(--subtle);
+  --color-fg: var(--fg); --color-muted: var(--muted);
+  --color-line: var(--line); --color-line-strong: var(--line-strong);
+  --color-brand: var(--brand); --color-brand-fg: var(--brand-fg); --color-tint: var(--tint);
+  --color-primary: var(--primary); --color-primary-fg: var(--primary-fg);
+  --color-danger: var(--danger); --color-ok: var(--ok); --color-warn: var(--warn);
+  --radius-md: 6px; --radius-lg: 8px; --radius-xl: 12px; --radius-2xl: 16px;
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --shadow-xs: none; --shadow-sm: none; --shadow-md: none; --shadow-lg: none;
+}
+
+body { font-family: var(--font-sans); -webkit-font-smoothing: antialiased; font-feature-settings: "cv11", "ss01"; }
+h1, h2, h3 { font-weight: 650; letter-spacing: -0.02em; }
+:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+
+/* Superfície elevada: borda suave e sombra mínima que cresce no hover. */
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow-card); }
+.card-hover { transition: box-shadow 150ms, border-color 150ms, transform 150ms; }
+.card-hover:hover { box-shadow: var(--shadow-lift); border-color: var(--line-strong); transform: translateY(-1px); }
+.bg-grad { background-image: var(--grad); }
+.text-grad { background-image: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.dots { background-image: radial-gradient(var(--line) 1px, transparent 1px); background-size: 22px 22px; }
+@keyframes shimmer { to { background-position: -200% 0; } }
+.shimmer { background: linear-gradient(90deg, var(--subtle) 30%, var(--line) 50%, var(--subtle) 70%); background-size: 200% 100%; animation: shimmer 1.4s linear infinite; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }

@@ -1,0 +1,5 @@
+Politica de ferias da Acme
+
+Todo colaborador CLT tem direito a 30 dias corridos de ferias apos 12 meses de trabalho.
+As ferias podem ser divididas em ate tres periodos, sendo que um deles deve ter no minimo 14 dias.
+O pedido de ferias deve ser feito com 30 dias de antecedencia pelo portal do RH.

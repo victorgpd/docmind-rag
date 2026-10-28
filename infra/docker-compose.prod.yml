@@ -1,0 +1,199 @@
+# Producao na VPS: nenhuma porta publicada no host. O unico caminho de entrada e o Cloudflare Tunnel (cloudflared) -> web:3000.
+# A API nao e exposta: o Next faz o proxy de /api/v1 para http://api:3001 na rede interna (mesma origem, sem CORS).
+# Imagens pre-construidas no GHCR (deploy.yml, linux/amd64): sem build na VPS. IMAGE_TAG=latest ou sha-<7 chars>.
+# Uso na VPS (so este arquivo e o .env.production, em ~/docmind; --env-file e obrigatorio; veja docs/DEPLOY.md):
+#   docker compose -p docmind -f docker-compose.prod.yml --env-file .env.production --profile minio --profile tunnel pull
+#   docker compose -p docmind -f docker-compose.prod.yml --env-file .env.production --profile minio --profile tunnel up -d
+# Build local (alternativa, consome 1-2 GB de RAM no web): acrescente -f infra/docker-compose.build.yml e `up -d --build`.
+# Perfis: `minio` = storage interno (padrao); omita-o para usar R2/S3 (S3_ENDPOINT etc.). `tunnel` = cloudflared.
+name: docmind # fixo: containers, redes e volumes ficam isolados de outros sistemas na mesma VPS
+
+# Soma dos mem_limit: 768+128+384+512+768+384+96 = 3040 MiB (~3 GB), para sobrar memoria a outros servicos da VPS.
+x-log: &log
+  driver: json-file
+  options: { max-size: "10m", max-file: "3" }
+
+x-app-env: &app-env
+  NODE_ENV: production
+  JWT_SECRET: ${JWT_SECRET:?defina JWT_SECRET (openssl rand -hex 32)}
+  DATABASE_URL: postgres://${POSTGRES_USER:-docmind}:${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-docmind}
+  REDIS_URL: redis://:${REDIS_PASSWORD:?defina REDIS_PASSWORD}@redis:6379
+  S3_ENDPOINT: ${S3_ENDPOINT:-http://minio:9000}
+  S3_BUCKET: ${S3_BUCKET:-docmind}
+  S3_ACCESS_KEY: ${S3_ACCESS_KEY:?defina S3_ACCESS_KEY}
+  S3_SECRET_KEY: ${S3_SECRET_KEY:?defina S3_SECRET_KEY}
+  LLM_PROVIDER: ${LLM_PROVIDER:-openai}
+  OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+  OPENAI_CHAT_MODEL: ${OPENAI_CHAT_MODEL:-gpt-4o-mini}
+  OPENAI_EMBED_MODEL: ${OPENAI_EMBED_MODEL:-text-embedding-3-small}
+  OLLAMA_URL: ${OLLAMA_URL:-}
+  OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.2}
+  OLLAMA_EMBED_MODEL: ${OLLAMA_EMBED_MODEL:-all-minilm}
+  # ranking/abstencao do RAG (vazio = padrao do codigo); valores recomendados com openai em docs/DEPLOY.md, passo 2
+  RAG_MIN_RELEVANCE: ${RAG_MIN_RELEVANCE:-}
+  RAG_W_RERANK: ${RAG_W_RERANK:-}
+  RAG_W_SIM: ${RAG_W_SIM:-}
+  RAG_W_RRF: ${RAG_W_RRF:-}
+  CORS_ORIGINS: ${CORS_ORIGINS:-}
+  # Cloudflare -> cloudflared -> web (Next) -> api: 2 saltos confiaveis para o IP real do cliente no x-forwarded-for
+  TRUST_PROXY: ${TRUST_PROXY:-2}
+  METRICS_TOKEN: ${METRICS_TOKEN:-}
+  AUTH_RATE_LIMIT: ${AUTH_RATE_LIMIT:-10}
+  RATE_LIMIT_READ: ${RATE_LIMIT_READ:-}
+  RATE_LIMIT_WRITE: ${RATE_LIMIT_WRITE:-}
+  MONTHLY_TOKEN_LIMIT: ${MONTHLY_TOKEN_LIMIT:-10000000}
+  GLOBAL_MONTHLY_TOKEN_LIMIT: ${GLOBAL_MONTHLY_TOKEN_LIMIT:-2000000}
+  REGISTRATION_LIMIT_PER_IP_PER_DAY: ${REGISTRATION_LIMIT_PER_IP_PER_DAY:-5}
+  REGISTRATION_ENABLED: ${REGISTRATION_ENABLED:-true}
+  # conta de demonstracao (somente leitura); prepare-a com o demo-maintenance (docs/DEPLOY.md)
+  DEMO_LOGIN_ENABLED: ${DEMO_LOGIN_ENABLED:-false}
+  DEMO_USER_EMAIL: ${DEMO_USER_EMAIL:-}
+  USAGE_PRICE_IN_PER_1M: ${USAGE_PRICE_IN_PER_1M:-0}
+  USAGE_PRICE_OUT_PER_1M: ${USAGE_PRICE_OUT_PER_1M:-0}
+  WORKER_CONCURRENCY: ${WORKER_CONCURRENCY:-1}
+
+x-app-deps: &app-deps
+  postgres: { condition: service_healthy }
+  redis: { condition: service_healthy }
+  # so existe com --profile minio; com R2/S3 externo o servico nao entra no projeto
+  minio-init: { condition: service_completed_successfully, required: false }
+
+services:
+  postgres:
+    image: pgvector/pgvector:0.8.2-pg16 # >= 0.8: a busca usa hnsw.iterative_scan
+    user: postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-docmind}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-docmind}
+    volumes: [pgdata:/var/lib/postgresql/data]
+    mem_limit: 768m
+    cpus: 1.0
+    logging: *log
+    networks: [internal]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    user: redis
+    restart: unless-stopped
+    command: ["redis-server", "--requirepass", "${REDIS_PASSWORD:?defina REDIS_PASSWORD}", "--appendonly", "yes"]
+    environment:
+      REDISCLI_AUTH: ${REDIS_PASSWORD}
+    volumes: [redisdata:/data]
+    mem_limit: 128m
+    cpus: 0.5
+    logging: *log
+    networks: [internal]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+
+  # Storage interno (padrao). As credenciais sao as mesmas S3_ACCESS_KEY/S3_SECRET_KEY que a API usa.
+  minio:
+    profiles: [minio]
+    image: bitnamilegacy/minio:latest # congelado (Bitnami legacy); para algo mantido use R2/S3 gerenciado
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: ${S3_ACCESS_KEY:?defina S3_ACCESS_KEY}
+      MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY:?defina S3_SECRET_KEY}
+    volumes: [miniodata:/bitnami/minio/data]
+    mem_limit: 384m
+    cpus: 0.5
+    logging: *log
+    networks: [internal]
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/127.0.0.1/9000'"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+
+  minio-init:
+    profiles: [minio]
+    image: bitnamilegacy/minio:latest
+    depends_on:
+      minio: { condition: service_healthy }
+    entrypoint: >
+      /bin/sh -c "for i in $$(seq 1 30); do mc alias set local http://minio:9000 $${MINIO_ROOT_USER} $${MINIO_ROOT_PASSWORD} && break; sleep 1; done
+      && mc mb --ignore-existing local/$${S3_BUCKET}"
+    environment:
+      MINIO_ROOT_USER: ${S3_ACCESS_KEY}
+      MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY}
+      S3_BUCKET: ${S3_BUCKET:-docmind}
+    restart: "no"
+    logging: *log
+    networks: [internal]
+
+  api:
+    image: ghcr.io/victorgpd/docmind-api:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    environment:
+      <<: *app-env
+      API_PORT: 3001
+    depends_on: *app-deps
+    mem_limit: 512m
+    cpus: 1.0
+    logging: *log
+    networks: [internal]
+    healthcheck:
+      # /ready checa banco e Redis (503 no shutdown)
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3001/api/v1/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 3s
+      start_period: 30s
+      retries: 5
+
+  worker:
+    image: ghcr.io/victorgpd/docmind-worker:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    environment: *app-env
+    # a api roda as migracoes; o worker espera ela ficar saudavel
+    depends_on:
+      <<: *app-deps
+      api: { condition: service_healthy }
+    mem_limit: 768m
+    cpus: 1.0
+    logging: *log
+    networks: [internal]
+
+  web:
+    image: ghcr.io/victorgpd/docmind-web:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    environment:
+      API_URL: http://api:3001
+    depends_on:
+      api: { condition: service_healthy }
+    mem_limit: 384m
+    cpus: 1.0
+    logging: *log
+    networks: [internal]
+
+  # Unica saida para a internet publica: tunel de saida para a Cloudflare (sem abrir portas). Hostname publico -> http://web:3000.
+  cloudflared:
+    profiles: [tunnel]
+    image: cloudflare/cloudflared:latest # roda como usuario nao-root (nonroot); fixe uma tag em producao se quiser
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${TUNNEL_TOKEN:?defina TUNNEL_TOKEN}
+    depends_on:
+      web: { condition: service_healthy }
+    mem_limit: 96m
+    cpus: 0.25
+    logging: *log
+    networks: [internal]
+
+networks:
+  internal:
+
+volumes:
+  pgdata:
+  redisdata:
+  miniodata:

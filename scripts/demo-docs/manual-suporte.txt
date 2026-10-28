@@ -1,0 +1,17 @@
+Manual de Suporte ao Cliente - Produto Nimbus
+
+1. Níveis de atendimento
+
+O suporte funciona de segunda a sexta, das 8h às 18h. Chamados críticos (sistema fora do ar) são atendidos 24 horas por dia.
+
+2. Prazos de resposta
+
+Prioridade crítica: primeira resposta em até 1 hora. Prioridade alta: até 4 horas. Prioridade normal: até 1 dia útil. Prioridade baixa: até 3 dias úteis.
+
+3. Redefinição de senha
+
+O cliente deve acessar a página de login e clicar em "Esqueci minha senha". O link de redefinição enviado por e-mail expira em 30 minutos. Após 5 tentativas erradas, a conta é bloqueada por 15 minutos.
+
+4. Cancelamento e reembolso
+
+O cliente pode cancelar a assinatura a qualquer momento pelo painel. O reembolso integral é possível em até 7 dias após a contratação; depois disso, o cancelamento vale a partir do próximo ciclo de cobrança.

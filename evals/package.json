@@ -1,0 +1,18 @@
+{
+  "name": "@docmind/evals",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "eval": "node ../node_modules/tsx/dist/cli.mjs src/run.ts",
+    "typecheck": "node ../node_modules/typescript/bin/tsc --noEmit",
+    "test": "node ../node_modules/vitest/vitest.mjs run"
+  },
+  "dependencies": {
+    "@docmind/agent": "workspace:*",
+    "@docmind/db": "workspace:*",
+    "@docmind/ingest": "workspace:*",
+    "@docmind/llm": "workspace:*",
+    "@docmind/retrieval": "workspace:*"
+  }
+}

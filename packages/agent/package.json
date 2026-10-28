@@ -1,0 +1,14 @@
+{
+  "name": "@docmind/agent",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": { ".": "./src/index.ts" },
+  "scripts": { "build": "tsc --noEmit", "typecheck": "tsc --noEmit", "test": "vitest run --passWithNoTests" },
+  "dependencies": {
+    "@docmind/llm": "workspace:*",
+    "@docmind/retrieval": "workspace:*",
+    "@docmind/shared": "workspace:*",
+    "zod": "^4.6.6"
+  }
+}

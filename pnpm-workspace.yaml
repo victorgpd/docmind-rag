@@ -1,0 +1,13 @@
+packages:
+  - apps/*
+  - packages/*
+  - tests
+  - evals
+allowBuilds:
+  esbuild: true
+  msgpackr-extract: false
+  sharp: true
+  unrs-resolver: true
+overrides:
+  postcss@<8.5.23: ">=8.5.23"
+  zod: "^4.6.6"

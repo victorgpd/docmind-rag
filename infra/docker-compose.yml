@@ -1,0 +1,122 @@
+# Defaults de senha/JWT sao SO PARA DEV (portas de banco/redis/minio ficam em 127.0.0.1). Troque em producao via infra/.env.
+# Uso: docker compose -f infra/docker-compose.yml up --build
+name: docmind
+
+x-app-env: &app-env
+  NODE_ENV: production
+  JWT_SECRET: ${JWT_SECRET:-dev-only-change-me-in-production-0123456789}
+  DATABASE_URL: postgres://${POSTGRES_USER:-docmind}:${POSTGRES_PASSWORD:-docmind}@postgres:5432/${POSTGRES_DB:-docmind}
+  REDIS_URL: redis://:${REDIS_PASSWORD:-dev-redis-password}@redis:6379
+  S3_ENDPOINT: http://minio:9000
+  S3_BUCKET: ${S3_BUCKET:-docmind}
+  S3_ACCESS_KEY: ${MINIO_ROOT_USER:-docmind}
+  S3_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-docmind-secret}
+  LLM_PROVIDER: ${LLM_PROVIDER:-local}
+  CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
+  # a API fica atras do proxy do Next (rewrites): sem isso o rate limit por IP vale para todos juntos
+  TRUST_PROXY: ${TRUST_PROXY:-1}
+  METRICS_TOKEN: ${METRICS_TOKEN:-}
+  AUTH_RATE_LIMIT: ${AUTH_RATE_LIMIT:-10}
+  OLLAMA_URL: ${OLLAMA_URL:-}
+  OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.2}
+  OLLAMA_EMBED_MODEL: ${OLLAMA_EMBED_MODEL:-all-minilm}
+
+x-app-deps: &app-deps
+  postgres: { condition: service_healthy }
+  redis: { condition: service_healthy }
+  minio-init: { condition: service_completed_successfully }
+
+services:
+  postgres:
+    image: pgvector/pgvector:0.8.2-pg16 # >= 0.8: a busca usa hnsw.iterative_scan
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-docmind}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-docmind}
+      POSTGRES_DB: ${POSTGRES_DB:-docmind}
+    volumes: [pgdata:/var/lib/postgresql/data]
+    ports: ["127.0.0.1:${POSTGRES_PORT:-5432}:5432"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--requirepass", "${REDIS_PASSWORD:-dev-redis-password}"]
+    environment:
+      REDISCLI_AUTH: ${REDIS_PASSWORD:-dev-redis-password}
+    volumes: [redisdata:/data]
+    ports: ["127.0.0.1:${REDIS_PORT:-6379}:6379"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  minio:
+    # minio/minio e minio/mc sairam do Docker Hub; bitnamilegacy/minio (traz o mc) e congelado: so para dev, em producao use S3 gerenciado
+    image: bitnamilegacy/minio:latest
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-docmind}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-docmind-secret}
+    volumes: [miniodata:/bitnami/minio/data]
+    ports: ["127.0.0.1:9000:9000", "127.0.0.1:9001:9001"]
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/127.0.0.1/9000'"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  minio-init:
+    image: bitnamilegacy/minio:latest
+    depends_on:
+      minio: { condition: service_healthy }
+    # retry: o healthcheck do minio pode passar antes da API S3 aceitar conexoes
+    entrypoint: >
+      /bin/sh -c "for i in $$(seq 1 30); do mc alias set local http://minio:9000 $${MINIO_ROOT_USER} $${MINIO_ROOT_PASSWORD} && break; sleep 1; done
+      && mc mb --ignore-existing local/$${S3_BUCKET}"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-docmind}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-docmind-secret}
+      S3_BUCKET: ${S3_BUCKET:-docmind}
+    restart: "no"
+
+  api:
+    build: { context: .., dockerfile: apps/api/Dockerfile }
+    environment:
+      <<: *app-env
+      API_PORT: 3001
+    depends_on: *app-deps
+    ports: ["${API_PORT:-3001}:3001"]
+    healthcheck:
+      # /ready checa banco e Redis (503 no shutdown); /health fica como liveness
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3001/api/v1/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 3s
+      start_period: 30s
+      retries: 5
+
+  worker:
+    build: { context: .., dockerfile: apps/worker/Dockerfile }
+    environment: *app-env
+    # a api roda as migracoes; o worker espera ela ficar saudavel
+    depends_on:
+      <<: *app-deps
+      api: { condition: service_healthy }
+
+  web:
+    build:
+      context: ..
+      dockerfile: apps/web/Dockerfile
+      args: { API_URL: "http://api:3001" }
+    environment:
+      API_URL: http://api:3001
+    depends_on:
+      api: { condition: service_healthy }
+    ports: ["${WEB_PORT:-3000}:3000"]
+
+volumes:
+  pgdata:
+  redisdata:
+  miniodata:

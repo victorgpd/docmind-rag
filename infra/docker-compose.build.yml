@@ -1,0 +1,12 @@
+# Override opcional: constroi as imagens na maquina em vez de baixar do GHCR (o build do Next usa 1-2 GB de RAM).
+# docker compose -f infra/docker-compose.prod.yml -f infra/docker-compose.build.yml --env-file .env.production --profile minio --profile tunnel up -d --build
+services:
+  api:
+    build: { context: .., dockerfile: apps/api/Dockerfile }
+  worker:
+    build: { context: .., dockerfile: apps/worker/Dockerfile }
+  web:
+    build:
+      context: ..
+      dockerfile: apps/web/Dockerfile
+      args: { API_URL: "http://api:3001" } # rewrites do Next sao resolvidos no build

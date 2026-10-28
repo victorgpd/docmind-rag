@@ -1,0 +1,35 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "lib": [
+      "ES2023",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "jsx": "preserve",
+    "allowJs": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "incremental": true
+  },
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    ".next-agent-verify/types/**/*.ts",
+    ".next-bundle/types/**/*.ts",
+    ".next-check/types/**/*.ts",
+    ".next-design/types/**/*.ts",
+    ".next-e2e/types/**/*.ts",
+    ".next-verify/types/**/*.ts",
+    ".next/types/**/*.ts",
+    "next-env.d.ts",
+    ".next-video/types/**/*.ts"
+  ],
+  "exclude": [
+    ".next*",
+    "node_modules"
+  ]
+}

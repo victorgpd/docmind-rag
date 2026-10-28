@@ -1,0 +1,14 @@
+{
+  "name": "@docmind/retrieval",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": { ".": "./src/index.ts" },
+  "scripts": { "bench": "node ../../node_modules/tsx/dist/cli.mjs src/bench.ts", "build": "tsc --noEmit", "typecheck": "tsc --noEmit", "test": "vitest run --passWithNoTests" },
+  "dependencies": {
+    "@docmind/config": "workspace:*",
+    "@docmind/db": "workspace:*",
+    "@docmind/llm": "workspace:*",
+    "@docmind/shared": "workspace:*"
+  }
+}

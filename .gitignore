@@ -1,0 +1,32 @@
+node_modules
+dist
+.next
+.turbo
+.env
+.env.local
+data/
+*.tsbuildinfo
+.next-*
+tests/test-results
+playwright-report
+
+# --- adicionais ---
+.env.*
+!.env.example
+coverage
+dist-*
+*.log
+/logs
+.pglite
+pglite-data
+/storage
+/uploads
+/tmp
+.tmp
+.cache
+chronos-sessoes.json
+
+# producao: segredos reais (o exemplo fica versionado)
+.env.production
+!.env.production.example
+!infra/.env.production.example

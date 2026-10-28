@@ -1,0 +1,30 @@
+{
+  "name": "docmind",
+  "private": true,
+  "packageManager": "pnpm@12.15.0",
+  "scripts": {
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "typecheck": "turbo run typecheck",
+    "lint": "eslint .",
+    "dev": "turbo run dev --parallel",
+    "eval": "pnpm --dir evals eval",
+    "check:deps": "tsx scripts/check-deps.ts",
+    "verify": "tsx scripts/verify.ts",
+    "smoke": "tsx scripts/smoke.ts",
+    "reindex": "pnpm --filter @docmind/worker reindex",
+    "demo:seed": "tsx scripts/seed-demo.ts",
+    "format": "prettier --write ."
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.17.0",
+    "eslint": "^9.17.0",
+    "prettier": "^3.4.2",
+    "turbo": "^2.3.3",
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.18.2",
+    "vitest": "^3.0.0",
+    "@types/node": "^22.10.2",
+    "tsx": "^4.19.2"
+  }
+}
