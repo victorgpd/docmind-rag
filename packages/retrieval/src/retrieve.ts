@@ -1,9 +1,9 @@
-import { withOrg, type Db } from '@docmind/db';
-import type { LLMProvider, Reranker } from '@docmind/llm';
+import type { OrgScope } from '@docmind/db';
+import type { LLMProvider, Reranker, Usage } from '@docmind/llm';
 import { DEFAULT_RANK, rankPassages, type RankConfig, type Ranked } from './rank';
 import { hybridSearch } from './search';
 
-export type RetrieveDeps = { db: Db; llm: LLMProvider; reranker: Reranker; rank?: RankConfig };
+export type RetrieveDeps = { scope: OrgScope; llm: LLMProvider; reranker: Reranker; rank?: RankConfig };
 
 /**
  * Busca híbrida + ranking por interpolação. Único caminho de recuperação: chat, agente e evals usam este.
@@ -11,13 +11,13 @@ export type RetrieveDeps = { db: Db; llm: LLMProvider; reranker: Reranker; rank?
  */
 export async function retrieve(
   deps: RetrieveDeps,
-  q: { orgId: string; query: string; collectionId?: string | null; documentIds?: string[]; embedding?: number[]; topK?: number; timings?: Record<string, number> },
+  q: { orgId: string; query: string; collectionId?: string | null; documentIds?: string[]; embedding?: number[]; topK?: number; onUsage?: (u: Usage) => void; timings?: Record<string, number> },
 ): Promise<Ranked> {
   const cfg = deps.rank ?? DEFAULT_RANK;
   const t0 = performance.now();
-  const embedding = q.embedding ?? (await deps.llm.embed([q.query]))[0]!;
+  const embedding = q.embedding ?? (await deps.llm.embed([q.query], { onUsage: q.onUsage }))[0]!;
   if (q.timings) q.timings.embed = performance.now() - t0;
-  const found = await withOrg(deps.db, q.orgId, (tx) =>
+  const found = await deps.scope(q.orgId, (tx) =>
     hybridSearch(tx, {
       embedding,
       text: q.query,

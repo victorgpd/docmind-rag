@@ -1,7 +1,8 @@
 import Link from 'next/link';
 import type { ComponentType, ReactNode } from 'react';
+import { AUTHOR_LINKEDIN_URL, AUTHOR_NAME, EVALS_URL, GITHUB_URL } from '../config/site';
 import { DemoButton } from './DemoButton';
-import { BoltIcon, Logo, QuoteIcon, ShieldIcon, SparkIcon } from './icons';
+import { BoltIcon, GithubIcon, Logo, QuoteIcon, ShieldIcon, SparkIcon } from './icons';
 import { ThemeToggle } from './ThemeToggle';
 
 // Landing pública: HTML/CSS puro (sem antd, sem imagens), gradiente radial e grade pontilhada em CSS.
@@ -13,6 +14,15 @@ const FEATURES: { title: string; text: string; Icon: ComponentType<{ size?: numb
   { title: 'Multi-organização e segurança', text: 'Dados isolados por organização, sessão protegida e nada de chaves no navegador.', Icon: ShieldIcon },
   { title: 'Modo agente', text: 'Para perguntas maiores, o agente pesquisa em etapas e mostra cada passo.', Icon: SparkIcon },
   { title: 'Rápido e leve', text: 'Páginas pequenas, respostas em streaming e processamento em segundo plano.', Icon: BoltIcon },
+];
+
+const gh = 'inline-flex items-center gap-1.5 text-sm font-medium !text-muted hover:!text-fg';
+const ext = { target: '_blank', rel: 'noopener noreferrer' } as const;
+
+const RESULTS = [
+  { value: '89%', label: 'recall@5', note: 'a fonte certa está entre os 5 trechos recuperados', base: 'base com embeddings locais: 67%' },
+  { value: '61%', label: 'recall@1', note: 'a fonte certa é o primeiro trecho' },
+  { value: '0,74', label: 'MRR', note: 'posição média da fonte certa (1 = sempre primeiro)' },
 ];
 
 const STEPS = [
@@ -36,7 +46,7 @@ function Mockup(): ReactNode {
   );
 }
 
-export function Landing() {
+export function Landing({ demoEnabled }: { demoEnabled?: boolean }) {
   return (
     <div className="relative min-h-screen overflow-x-clip bg-bg text-fg">
       <div aria-hidden className="dots pointer-events-none absolute inset-x-0 top-0 h-[34rem] opacity-60 [mask-image:radial-gradient(ellipse_at_top,black,transparent_70%)]" />
@@ -45,13 +55,28 @@ export function Landing() {
       <header className="relative mx-auto flex max-w-5xl items-center justify-between px-5 py-5">
         <Logo />
         <nav aria-label="Acesso" className="flex items-center gap-2">
+          <a href={GITHUB_URL} {...ext} className={`${gh} mr-1 px-2 max-sm:hidden`}>
+            <GithubIcon size={18} />
+            <span className="sr-only sm:not-sr-only">GitHub</span>
+          </a>
           <ThemeToggle />
           <Link href="/login" className={`${cta} h-9 !text-fg hover:bg-subtle`}>
             Entrar
           </Link>
-          <Link href="/register" className={`${cta} bg-grad h-9 !text-primary-fg hover:brightness-110`}>
-            Criar conta
-          </Link>
+          <DemoButton
+            initialEnabled={demoEnabled}
+            className={`${cta} bg-grad h-9 text-primary-fg hover:brightness-110 max-sm:hidden`}
+            before={
+              <Link href="/register" className={`${cta} h-9 !text-fg hover:bg-subtle max-sm:hidden`}>
+                Criar conta
+              </Link>
+            }
+            fallback={
+              <Link href="/register" className={`${cta} bg-grad h-9 !text-primary-fg hover:brightness-110`}>
+                Criar conta
+              </Link>
+            }
+          />
         </nav>
       </header>
 
@@ -65,13 +90,10 @@ export function Landing() {
             Envie seus arquivos, converse em português e receba respostas com citações que você pode conferir em um clique.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
-            <Link href="/login" className={`${cta} bg-grad !text-primary-fg hover:brightness-110`}>
-              Entrar
-            </Link>
+            <DemoButton initialEnabled={demoEnabled} className={`${cta} bg-grad text-primary-fg hover:brightness-110`} hint="Sem cadastro. Conta de demonstração com documentos de exemplo, somente leitura." />
             <Link href="/register" className={`${cta} border border-line-strong bg-surface !text-fg hover:bg-subtle`}>
               Criar conta
             </Link>
-            <DemoButton className={`${cta} border border-line-strong bg-surface text-fg hover:bg-subtle`} />
           </div>
         </section>
 
@@ -96,6 +118,35 @@ export function Landing() {
           </ul>
         </section>
 
+        <section aria-labelledby="res" className="mx-auto max-w-5xl px-5 pb-20">
+          <h2 id="res" className="mb-2 text-center text-2xl sm:text-3xl">
+            Resultados medidos
+          </h2>
+          <p className="mx-auto mb-8 max-w-xl text-center text-sm text-muted">
+            Configuração de produção (embeddings da OpenAI, gpt-4o-mini e reranking), em 20 perguntas inéditas de um conjunto separado, nunca usado para ajuste.
+          </p>
+          <ul className="grid gap-4 sm:grid-cols-3">
+            {RESULTS.map((r) => (
+              <li key={r.label} className="card p-5">
+                <p className="text-grad w-fit text-4xl font-semibold tracking-tight tabular-nums">{r.value}</p>
+                <h3 className="mt-1 text-base">{r.label}</h3>
+                <p className="mt-1 text-sm text-muted">{r.note}</p>
+                {r.base && <p className="mt-2 text-xs text-muted">{r.base}</p>}
+              </li>
+            ))}
+          </ul>
+          <p className="mx-auto mt-6 max-w-2xl text-center text-sm">
+            Ainda responde “não encontrei” em cerca de 1 a cada 3 perguntas inéditas que têm resposta (falsa abstenção de 33%). É o próximo ponto a melhorar.
+          </p>
+          <p className="mx-auto mt-2 max-w-2xl text-center text-xs text-muted">
+            Juiz lexical e amostra pequena; metodologia e dados no{' '}
+            <a href={EVALS_URL} {...ext} className="font-medium !text-brand underline underline-offset-4">
+              GitHub
+            </a>
+            .
+          </p>
+        </section>
+
         <section aria-labelledby="como" className="mx-auto max-w-5xl px-5 pb-24">
           <h2 id="como" className="mb-8 text-center text-2xl sm:text-3xl">
             Como funciona
@@ -118,6 +169,24 @@ export function Landing() {
         <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-5 py-6 text-sm text-muted">
           <Logo size={22} />
           <p>© {new Date().getFullYear()} DocMind. Respostas com fontes.</p>
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+            {AUTHOR_NAME && (
+              <p>
+                Feito por{' '}
+                {AUTHOR_LINKEDIN_URL ? (
+                  <a href={AUTHOR_LINKEDIN_URL} {...ext} aria-label={`LinkedIn de ${AUTHOR_NAME}`} className="font-medium !text-brand underline underline-offset-4">
+                    {AUTHOR_NAME}
+                  </a>
+                ) : (
+                  <span className="font-medium text-fg">{AUTHOR_NAME}</span>
+                )}
+              </p>
+            )}
+            <a href={GITHUB_URL} {...ext} className={gh}>
+              <GithubIcon size={16} />
+              GitHub
+            </a>
+          </div>
         </div>
       </footer>
     </div>

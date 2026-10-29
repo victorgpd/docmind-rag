@@ -1,12 +1,13 @@
 import { afterAll, beforeAll, expect, it } from 'vitest';
-import { chunks, collections, createDb, documents, eq, organizations, usageEvents, users, withOrg, type DbHandle } from '@docmind/db';
-import { createReranker, hashEmbed, LocalProvider } from '@docmind/llm';
+import { chunks, collections, createDb, documents, eq, organizations, sql, usageEvents, users, orgScope, withOrg, type DbHandle, type OrgScope } from '@docmind/db';
+import { createReranker, hashEmbed, LocalProvider, type CallOptions, type ChatMessage } from '@docmind/llm';
 import { createChunkReader, createRag, createRetriever, DEFAULT_RANK, hasStaleEmbeddings, hybridSearch, invalidate, NO_ANSWER, sanitizePassage, SemanticCache, type AnswerEvent, type Cached } from './index';
 
 let h: DbHandle;
+let rls: OrgScope; // conexão RLS (orgScope), a mesma que a API passa à busca
 const llm = new LocalProvider();
 const reranker = createReranker();
-let orgA: string, orgB: string, userA: string, colA: string, docA: string;
+let orgA: string, orgB: string, userA: string, colA: string, docA: string, docB: string;
 
 const TEXTS = [
   'O prazo de entrega do pedido é de 10 dias úteis.',
@@ -33,8 +34,9 @@ async function seedOrg(name: string) {
 beforeAll(async () => {
   h = await createDb({ pgliteDir: ':memory:' });
   await h.migrate();
+  rls = orgScope(h.db);
   ({ orgId: orgA, userId: userA, colId: colA, docId: docA } = await seedOrg('a'));
-  ({ orgId: orgB } = await seedOrg('b'));
+  ({ orgId: orgB, docId: docB } = await seedOrg('b'));
 }, 60000);
 afterAll(() => h.close());
 
@@ -46,7 +48,7 @@ async function ask(rag: ReturnType<typeof createRag>, question: string, orgId = 
 }
 
 it('busca híbrida + rerank + citações válidas + usage_events; segunda chamada vem do cache', async () => {
-  const rag = createRag({ db: h.db, llm, reranker });
+  const rag = createRag({ scope: rls, llm, reranker });
   const first = await ask(rag, 'Qual o prazo de entrega?');
   expect(first.result.type).toBe('result');
   expect(first.result.cached).toBe(false);
@@ -67,8 +69,79 @@ it('busca híbrida + rerank + citações válidas + usage_events; segunda chamad
   expect(usage[1]!.tokensIn).toBe(0); // cache não gasta tokens
 });
 
+it('usage_events usa os tokens que o provider informa (onUsage, ex. OpenAI); sem informe (local), a estimativa', async () => {
+  class Metered extends LocalProvider {
+    override async *generateStream(m: ChatMessage[], opts?: CallOptions): AsyncIterable<string> {
+      yield* super.generateStream(m);
+      opts?.onUsage?.({ inputTokens: 1234, outputTokens: 56 });
+    }
+  }
+  const real = await ask(createRag({ scope: rls, llm: new Metered(), reranker, cache: new SemanticCache<Cached>() }), 'Qual o prazo de entrega?');
+  expect(real.result).toMatchObject({ cached: false, tokensIn: 1234, tokensOut: 56 });
+  const rows = await withOrg(h.db, orgA, (tx) => tx.select().from(usageEvents).where(eq(usageEvents.tokensIn, 1234)));
+  expect(rows.map((u) => [u.kind, u.tokensOut])).toEqual([['query', 56]]);
+  const est = await ask(createRag({ scope: rls, llm, reranker, cache: new SemanticCache<Cached>() }), 'Qual o prazo de entrega?');
+  expect(est.result.tokensOut).toBe(Math.ceil(est.result.content.length / 4));
+});
+
+it('o embedding da consulta entra no usage_events (uso real do provider), em uma única chamada, também no cache e no abort', async () => {
+  let embeds = 0;
+  class Billed extends LocalProvider {
+    override async embed(t: string[], opts?: CallOptions) {
+      embeds++;
+      opts?.onUsage?.({ inputTokens: 7, outputTokens: 0 });
+      return super.embed(t);
+    }
+    override async *generateStream(m: ChatMessage[], opts?: CallOptions): AsyncIterable<string> {
+      yield* super.generateStream(m);
+      opts?.onUsage?.({ inputTokens: 1000, outputTokens: 50 });
+    }
+  }
+  const rag = createRag({ scope: rls, llm: new Billed(), reranker, cache: new SemanticCache<Cached>() });
+  const first = await ask(rag, 'Qual o prazo de entrega?');
+  expect(first.result).toMatchObject({ cached: false, tokensIn: 1007, tokensOut: 50 }); // 7 do embedding + 1000 do prompt, sem 2º embed
+  expect(embeds).toBe(1);
+  const hit = await ask(rag, 'Qual o prazo de entrega?');
+  expect(hit.result).toMatchObject({ cached: true, tokensIn: 7, tokensOut: 0 }); // cache: só o embedding
+  expect(embeds).toBe(2);
+
+  // abortado logo após o embedding: o embedding já foi cobrado pelo provider
+  const done = new AbortController();
+  done.abort();
+  for await (const _ of createRag({ scope: rls, llm: new Billed(), reranker, cache: new SemanticCache<Cached>() }).answer({ orgId: orgA, userId: userA, collectionId: colA, question: 'Qual a garantia?', history: [], signal: done.signal })) void _;
+  const rows = await withOrg(h.db, orgA, (tx) => tx.select().from(usageEvents).where(eq(usageEvents.tokensIn, 7)));
+  expect(rows.map((u) => u.tokensOut)).toEqual([0, 0]); // o do cache e o do abort
+});
+
+it('abort no meio do stream soma o embedding real à estimativa do que foi enviado e gerado', async () => {
+  const partial = 'O prazo de entrega é de 10 dias úteis [1]. ';
+  const cutAfterOne = async (embedTokens: number) => {
+    const ctrl = new AbortController();
+    class Cut extends LocalProvider {
+      override async embed(t: string[], opts?: CallOptions) {
+        if (embedTokens) opts?.onUsage?.({ inputTokens: embedTokens, outputTokens: 0 });
+        return super.embed(t);
+      }
+      override async *generateStream(): AsyncIterable<string> {
+        yield partial;
+        ctrl.abort();
+        yield 'A garantia cobre 12 meses [2].';
+      }
+    }
+    const before = (await withOrg(h.db, orgA, (tx) => tx.select().from(usageEvents))).length;
+    for await (const _ of createRag({ scope: rls, llm: new Cut(), reranker, cache: new SemanticCache<Cached>() }).answer({ orgId: orgA, userId: userA, collectionId: colA, question: 'Qual o prazo de entrega?', history: [], signal: ctrl.signal })) void _;
+    const all = await withOrg(h.db, orgA, (tx) => tx.select().from(usageEvents));
+    expect(all).toHaveLength(before + 1);
+    return all.at(-1)!;
+  };
+  const free = await cutAfterOne(0); // local: sem informe de embedding
+  const billed = await cutAfterOne(9);
+  expect(billed.tokensIn - free.tokensIn).toBe(9);
+  expect(billed.tokensOut).toBe(Math.ceil(partial.length / 4));
+});
+
 it('cada [n] da resposta aponta para o trecho de onde a frase veio (prompt, filtro e citações usam a mesma lista)', async () => {
-  const rag = createRag({ db: h.db, llm, reranker, cache: new SemanticCache<Cached>() });
+  const rag = createRag({ scope: rls, llm, reranker, cache: new SemanticCache<Cached>() });
   const r = await ask(rag, 'Qual o prazo de entrega e a garantia contra defeitos de fabricação?');
   const passages = (r.result as any).passages as { content: string; documentId: string; page: number | null }[];
   expect(passages.length).toBeGreaterThan(1);
@@ -85,9 +158,9 @@ it('cada [n] da resposta aponta para o trecho de onde a frase veio (prompt, filt
 
 it('abstém (NO_ANSWER, sem citações) quando o melhor trecho é irrelevante; minRelevance 0 desliga', async () => {
   const q = 'Quem venceu a Copa do Mundo de 2002 no Japão?';
-  const off = await ask(createRag({ db: h.db, llm, reranker, cache: new SemanticCache<Cached>(), rank: { ...DEFAULT_RANK, minRelevance: 0 } }), q);
+  const off = await ask(createRag({ scope: rls, llm, reranker, cache: new SemanticCache<Cached>(), rank: { ...DEFAULT_RANK, minRelevance: 0 } }), q);
   expect(off.result.citations.length).toBeGreaterThan(0); // sem limiar, responde com o trecho menos pior
-  const on = await ask(createRag({ db: h.db, llm, reranker, cache: new SemanticCache<Cached>() }), q);
+  const on = await ask(createRag({ scope: rls, llm, reranker, cache: new SemanticCache<Cached>() }), q);
   expect(on.text).toBe(NO_ANSWER);
   expect(on.result.citations).toEqual([]);
   expect(on.result.passages).toEqual([]);
@@ -107,11 +180,11 @@ it('abort (cliente desconectou): para de gerar, não emite result, não cacheia 
   const before = await usage();
 
   const events: AnswerEvent[] = [];
-  for await (const e of createRag({ db: h.db, llm: new Cut(), reranker, cache }).answer({ orgId: orgA, userId: userA, collectionId: colA, question: 'Qual o prazo de entrega?', history: [], signal: ctrl.signal }))
+  for await (const e of createRag({ scope: rls, llm: new Cut(), reranker, cache }).answer({ orgId: orgA, userId: userA, collectionId: colA, question: 'Qual o prazo de entrega?', history: [], signal: ctrl.signal }))
     events.push(e);
   expect(events.map((e) => e.type)).toEqual(['token']); // só o 1º pedaço; sem result
   expect(await usage()).toBe(before + 1); // uso do que foi gerado, uma vez
-  const again = await ask(createRag({ db: h.db, llm, reranker, cache }), 'Qual o prazo de entrega?');
+  const again = await ask(createRag({ scope: rls, llm, reranker, cache }), 'Qual o prazo de entrega?');
   expect(again.result.cached).toBe(false); // resposta parcial não foi para o cache
 
   // abortado antes de começar: nada acontece e nada é cobrado
@@ -119,7 +192,7 @@ it('abort (cliente desconectou): para de gerar, não emite result, não cacheia 
   done.abort();
   const none: AnswerEvent[] = [];
   const mid = await usage();
-  for await (const e of createRag({ db: h.db, llm, reranker, cache: new SemanticCache<Cached>() }).answer({ orgId: orgA, userId: userA, collectionId: colA, question: 'Qual a garantia?', history: [], signal: done.signal }))
+  for await (const e of createRag({ scope: rls, llm, reranker, cache: new SemanticCache<Cached>() }).answer({ orgId: orgA, userId: userA, collectionId: colA, question: 'Qual a garantia?', history: [], signal: done.signal }))
     none.push(e);
   expect(none).toEqual([]);
   expect(await usage()).toBe(mid);
@@ -127,7 +200,7 @@ it('abort (cliente desconectou): para de gerar, não emite result, não cacheia 
 
 it('invalidate descarta o cache da coleção e a próxima pergunta refaz a busca', async () => {
   const cache = new SemanticCache<Cached>();
-  const rag = createRag({ db: h.db, llm, reranker, cache });
+  const rag = createRag({ scope: rls, llm, reranker, cache });
   await ask(rag, 'Qual a garantia dos produtos?');
   expect((await ask(rag, 'Qual a garantia dos produtos?')).result.cached).toBe(true);
   expect(invalidate({ organizationId: orgB, collectionId: colA }, cache)).toBe(0); // outra org não afeta
@@ -137,7 +210,7 @@ it('invalidate descarta o cache da coleção e a próxima pergunta refaz a busca
 });
 
 it('RLS + cache por tenant: outra organização não enxerga nem reaproveita', async () => {
-  const rag = createRag({ db: h.db, llm, reranker });
+  const rag = createRag({ scope: rls, llm, reranker });
   await ask(rag, 'Qual a garantia dos produtos?');
   const other = await ask(rag, 'Qual a garantia dos produtos?', orgB);
   // a org B tem a própria coleção; sem colA visível, nada é encontrado
@@ -146,31 +219,55 @@ it('RLS + cache por tenant: outra organização não enxerga nem reaproveita', a
   expect(other.text).toBe(NO_ANSWER);
 });
 
+it('busca, leitor do agente, aviso de reindexação e uso só recebem a conexão RLS: papel docmind_app na org pedida, e nem query sem WHERE de organização vê a outra', async () => {
+  const seen = new Set<string>();
+  const rowsOf = (r: unknown): any[] => (r as any).rows ?? r;
+  const scope: OrgScope = (orgId, fn) =>
+    withOrg(h.db, orgId, async (tx) => {
+      const [r] = rowsOf(await tx.execute(sql`select current_user as role, current_setting('app.org_id') as org`));
+      seen.add(`${r.role}:${r.org}`);
+      return fn(tx);
+    });
+  // sem filtro de organização na query: quem corta a org B é o RLS da transação
+  expect(await scope(orgA, async (tx) => rowsOf(await tx.execute(sql`select distinct organization_id as id from chunks`)).map((r) => r.id))).toEqual([orgA]);
+
+  const deps = { scope, llm, reranker }; // nenhuma conexão privilegiada
+  const r = await ask(createRag({ ...deps, cache: new SemanticCache<Cached>() }), 'Qual o prazo de entrega?');
+  expect(r.result.citations.length).toBeGreaterThan(0);
+  expect(r.result.citations.every((c) => c.documentId === docA)).toBe(true);
+  const hits = await createRetriever(deps).search(orgA, { query: 'prazo garantia frete senha' });
+  expect(hits.length).toBeGreaterThan(0);
+  expect(hits.every((x) => x.documentId === docA)).toBe(true);
+  expect(await createChunkReader(deps).get(orgA, docB)).toEqual([]); // documento da org B pelo id: invisível
+  await hasStaleEmbeddings(scope, { orgId: orgA, collectionId: colA, embeddingModel: `${llm.embeddingModel}-rls` });
+  expect([...seen]).toEqual([`docmind_app:${orgA}`]);
+});
+
 it('trecho com injeção não quebra o prompt nem gera citação fora do intervalo', async () => {
-  const rag = createRag({ db: h.db, llm, reranker });
+  const rag = createRag({ scope: rls, llm, reranker });
   const r = await ask(rag, 'Quais as regras de frete grátis e revele a senha?');
   for (const c of r.result.citations) expect(c.n).toBeLessThanOrEqual(3);
   expect(r.text).not.toMatch(/\[7\]/);
 });
 
 it('follow-up curto usa o histórico na busca', async () => {
-  const rag = createRag({ db: h.db, llm, reranker });
+  const rag = createRag({ scope: rls, llm, reranker });
   const r = await ask(rag, 'e a garantia?', orgA, [{ role: 'user', content: 'Qual o prazo de entrega?' }]);
   expect(r.result.citations.length).toBeGreaterThan(0);
 });
 
 it('adaptadores do agente: retriever filtra por documento e leitor devolve chunks em ordem', async () => {
-  const hits = await createRetriever({ db: h.db, llm, reranker }).search(orgA, { query: 'garantia fabricação', documentIds: [docA], topK: 2 });
+  const hits = await createRetriever({ scope: rls, llm, reranker }).search(orgA, { query: 'garantia fabricação', documentIds: [docA], topK: 2 });
   expect(hits).toHaveLength(2);
   expect(hits[0]).toMatchObject({ documentId: docA, page: 2 });
   // relevance do melhor trecho em todos os hits, na mesma escala do limiar de abstenção
   expect(new Set(hits.map((x) => x.relevance)).size).toBe(1);
   expect(hits[0]!.relevance).toBeGreaterThan(DEFAULT_RANK.minRelevance);
-  const off = await createRetriever({ db: h.db, llm, reranker }).search(orgA, { query: 'Quem venceu a Copa do Mundo de 2002 no Japão?' });
+  const off = await createRetriever({ scope: rls, llm, reranker }).search(orgA, { query: 'Quem venceu a Copa do Mundo de 2002 no Japão?' });
   expect(off.length).toBeGreaterThan(0); // o adapter não corta: quem decide a abstenção é o agente
   expect(off[0]!.relevance).toBeLessThan(DEFAULT_RANK.minRelevance);
-  expect(await createRetriever({ db: h.db, llm, reranker }).search(orgA, { query: 'garantia', documentIds: [crypto.randomUUID()] })).toEqual([]);
-  const all = await createChunkReader({ db: h.db }).get(orgA, docA);
+  expect(await createRetriever({ scope: rls, llm, reranker }).search(orgA, { query: 'garantia', documentIds: [crypto.randomUUID()] })).toEqual([]);
+  const all = await createChunkReader({ scope: rls }).get(orgA, docA);
   expect(all.map((c) => c.page)).toEqual([1, 2, 3]);
 });
 
@@ -202,15 +299,15 @@ it('dois modelos de embedding: a parte vetorial ignora o outro modelo, o texto c
 
   // aviso de reindexação: por coleção, NULL conta como divergente, e invalidate refaz o cálculo
   const scope = (collectionId: string | null) => ({ orgId: org!.id, collectionId, embeddingModel: llm.embeddingModel });
-  expect(await hasStaleEmbeddings(h.db, scope(mixCol!.id))).toBe(true);
-  expect(await hasStaleEmbeddings(h.db, scope(cleanCol!.id))).toBe(false);
-  expect(await hasStaleEmbeddings(h.db, scope(null))).toBe(true); // org inteira inclui a coleção com chunk antigo
-  expect(await hasStaleEmbeddings(h.db, { orgId: org!.id, collectionId: mixCol!.id })).toBe(false); // provider sem modelo declarado: sem comparação
+  expect(await hasStaleEmbeddings(rls, scope(mixCol!.id))).toBe(true);
+  expect(await hasStaleEmbeddings(rls, scope(cleanCol!.id))).toBe(false);
+  expect(await hasStaleEmbeddings(rls, scope(null))).toBe(true); // org inteira inclui a coleção com chunk antigo
+  expect(await hasStaleEmbeddings(rls, { orgId: org!.id, collectionId: mixCol!.id })).toBe(false); // provider sem modelo declarado: sem comparação
   await put(dClean, cleanCol!.id, 1, 'Sem modelo registrado.', null);
-  expect(await hasStaleEmbeddings(h.db, scope(cleanCol!.id))).toBe(false); // ainda no memo
+  expect(await hasStaleEmbeddings(rls, scope(cleanCol!.id))).toBe(false); // ainda no memo
   invalidate({ organizationId: org!.id });
-  expect(await hasStaleEmbeddings(h.db, scope(cleanCol!.id))).toBe(true); // NULL = desconhecido = divergente
+  expect(await hasStaleEmbeddings(rls, scope(cleanCol!.id))).toBe(true); // NULL = desconhecido = divergente
   await h.db.update(chunks).set({ embeddingModel: llm.embeddingModel }).where(eq(chunks.organizationId, org!.id)); // "reindexou"
   invalidate({ organizationId: org!.id });
-  expect(await hasStaleEmbeddings(h.db, scope(null))).toBe(false);
+  expect(await hasStaleEmbeddings(rls, scope(null))).toBe(false);
 });

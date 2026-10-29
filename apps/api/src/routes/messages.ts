@@ -18,7 +18,7 @@ const HISTORY = 10; // mensagens anteriores enviadas à reescrita/prompt
 export function messagesRouter(deps: Deps, agentOpts: AgentRunnerOpts = {}) {
   const r = Router();
   const agentRunner = createAgentRunner(deps, agentOpts); // a mesma execução de POST /agent/run
-  const rag = createRag({ db: deps.db.db, llm: deps.llm, reranker: createReranker(), cache: sharedCache, rank: agentRunner.rank });
+  const rag = createRag({ scope: agentRunner.scope, llm: deps.llm, reranker: createReranker(), cache: sharedCache, rank: agentRunner.rank });
 
   /**
    * POST /conversations/:id/messages -> text/event-stream.
@@ -49,7 +49,7 @@ export function messagesRouter(deps: Deps, agentOpts: AgentRunnerOpts = {}) {
     });
 
     // chunks de outro modelo de embedding no escopo: a busca vetorial os ignora; avisa no `done` (chat e agente)
-    const warnings = (await hasStaleEmbeddings(deps.db.db, { orgId, collectionId: conv.collectionId, embeddingModel: deps.llm.embeddingModel })) ? [REINDEX_NEEDED] : undefined;
+    const warnings = (await hasStaleEmbeddings(agentRunner.scope, { orgId, collectionId: conv.collectionId, embeddingModel: deps.llm.embeddingModel })) ? [REINDEX_NEEDED] : undefined;
 
     const s = openSse(res);
     // res 'close' (e não req 'close', que dispara ao fim da leitura do corpo) sinaliza a desconexão do cliente

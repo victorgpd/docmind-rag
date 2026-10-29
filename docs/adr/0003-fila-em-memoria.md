@@ -12,4 +12,5 @@ A interface `Queue` (`enqueue`, `process`) tem duas implementações: `MemoryQue
 - Um comando sobe tudo em dev.
 - A fila em memória não sobrevive a reinício e não cruza processos: jobs pendentes se perdem se a API cair. Isso é aceitável em dev e inaceitável em produção.
 - Retry com backoff exponencial vive no código de ingestão, não na fila, então vale nas duas implementações.
+- A fila repete só o job que rejeita, e o worker só rejeita quando não conseguiu ler o documento ou gravar o desfecho (banco fora). A política (`RETRY`: 3 tentativas, backoff exponencial de 1 s) é a mesma nas duas implementações.
 - Em produção, `REDIS_URL` liga o worker separado e o rate limit compartilhado.

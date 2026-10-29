@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { LocalProvider, type ChatMessage } from '@docmind/llm';
+import { LocalProvider, type CallOptions, type ChatMessage } from '@docmind/llm';
 import { AgentEventSchema, detectIntent, findTable, nextAction, runAgent, type AgentEvent, type ChunkReader, type Hit, type Retriever } from './index';
 
 const ORG = '00000000-0000-4000-8000-000000000001';
@@ -61,6 +61,41 @@ describe('runAgent', () => {
     expect(result!.answer).toMatch(/\[1\]/);
     expect(result!.citations.length).toBeGreaterThan(0);
     expect(result!.usage.tokensIn).toBeGreaterThan(0);
+  });
+  it('uso real do provider (onUsage) no lugar da estimativa, somado por chamada; sem informe, estima', async () => {
+    const base = new LocalProvider();
+    const metered = {
+      name: base.name,
+      dims: base.dims,
+      embed: base.embed.bind(base),
+      generateObject: base.generateObject.bind(base),
+      generateStream: async function* (m: ChatMessage[], opts?: CallOptions) {
+        yield* base.generateStream(m);
+        opts?.onUsage?.({ inputTokens: 1000, outputTokens: 20 });
+      },
+    };
+    const usageOf = async (query: string, extra: object, llm: typeof metered | LocalProvider) => {
+      for await (const e of runAgent({ query, ...extra }, { ...deps, llm })) if (e.type === 'result') return e.result.usage;
+    };
+    expect(await usageOf('qual a multa?', {}, metered)).toMatchObject({ tokensIn: 1000, tokensOut: 20 });
+    expect(await usageOf('compare os documentos', { documentIds: [D1, D2] }, metered)).toMatchObject({ tokensIn: 2000, tokensOut: 40 }); // dois resumos
+    const est = await usageOf('qual a multa?', {}, base);
+    expect(est!.tokensIn).not.toBe(1000);
+    expect(est!.tokensIn).toBeGreaterThan(0);
+  });
+  it('conta o embedding da consulta informado pelo retriever e, se o stream falha, o gasto parcial (estimado) fica no contador do chamador', async () => {
+    const billed: Retriever = { search: async (_o, q) => (q.onUsage?.({ inputTokens: 7, outputTokens: 0 }), retriever.search(_o, q)) };
+    const metered = new LocalProvider();
+    const ok = { ...metered, name: metered.name, dims: metered.dims, embed: metered.embed.bind(metered), generateObject: metered.generateObject.bind(metered),
+      generateStream: async function* (m: ChatMessage[], opts?: CallOptions) { yield* metered.generateStream(m); opts?.onUsage?.({ inputTokens: 1000, outputTokens: 20 }); } };
+    for await (const e of runAgent({ query: 'qual a multa?' }, { ...deps, llm: ok, retriever: billed }))
+      if (e.type === 'result') expect(e.result.usage).toMatchObject({ tokensIn: 1007, tokensOut: 20 });
+
+    const broken = { ...ok, generateStream: async function* () { yield 'resposta parcial'; throw new Error('stream caiu'); } };
+    const usage = { in: 0, out: 0 };
+    await expect((async () => { for await (const _ of runAgent({ query: 'qual a multa?' }, { ...deps, llm: broken, retriever: billed, usage })) void _; })()).rejects.toThrow('stream caiu');
+    expect(usage.in).toBeGreaterThan(7); // embedding + prompt estimado
+    expect(usage.out).toBe(Math.ceil('resposta parcial'.length / 4));
   });
   it('summarize via busca', async () => {
     const { result } = await run('resuma o documento');
@@ -135,6 +170,31 @@ describe('numeracao de citacoes', () => {
     expect(used.length).toBeGreaterThan(0);
     expect(used.every((n) => ns.includes(n))).toBe(true);
     expect(Math.max(...used)).toBeGreaterThan(1); // segundo documento comeca depois do primeiro
+  });
+  it('[n] inventado pelo modelo some da resposta (mesmo filtro do chat); os validos viram o n global', async () => {
+    const base = new LocalProvider();
+    const liar = {
+      name: base.name,
+      dims: base.dims,
+      embed: base.embed.bind(base),
+      generateObject: base.generateObject.bind(base),
+      generateStream: async function* () {
+        yield 'A multa e de dez por cento [1]. Fonte inventada [9]. Zero [0].';
+      },
+    };
+    for (const [query, extra] of [['qual a multa?', {}], ['compare os documentos', { documentIds: [D1, D2] }]] as [string, object][]) {
+      let answer = '';
+      let ns: number[] = [];
+      for await (const e of runAgent({ query, ...extra }, { ...deps, llm: liar }))
+        if (e.type === 'result') {
+          answer = e.result.answer;
+          ns = e.result.citations.map((c) => c.n);
+        }
+      const used = [...answer.matchAll(/\[(\d+)\]/g)].map((m) => Number(m[1]));
+      expect(answer).not.toMatch(/\[9\]|\[0\]/);
+      expect(used.length).toBeGreaterThan(0);
+      expect(used.every((n) => ns.includes(n))).toBe(true);
+    }
   });
 });
 

@@ -16,6 +16,9 @@
     "demo:seed": "tsx scripts/seed-demo.ts",
     "format": "prettier --write ."
   },
+  "dependencies": {
+    "tsx": "^4.19.2"
+  },
   "devDependencies": {
     "@eslint/js": "^9.17.0",
     "eslint": "^9.17.0",
@@ -24,7 +27,6 @@
     "typescript": "^5.7.2",
     "typescript-eslint": "^8.18.2",
     "vitest": "^3.0.0",
-    "@types/node": "^22.10.2",
-    "tsx": "^4.19.2"
+    "@types/node": "^22.10.2"
   }
 }

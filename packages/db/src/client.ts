@@ -80,3 +80,7 @@ export async function withOrg<T>(db: Db, orgId: string, fn: (tx: Db) => Promise<
     return fn(tx as unknown as Db);
   });
 }
+
+/** Só abre transações com RLS (withOrg). Busca e agente recebem isto, nunca o Db privilegiado: esquecer o withOrg deixa de ser possível. */
+export type OrgScope = <T>(orgId: string, fn: (tx: Db) => Promise<T>) => Promise<T>;
+export const orgScope = (db: Db): OrgScope => (orgId, fn) => withOrg(db, orgId, fn);

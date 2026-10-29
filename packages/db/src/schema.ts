@@ -67,6 +67,8 @@ export const documents = pgTable('documents', {
   error: text('error'),
   pageCount: integer('page_count'),
   createdAt: createdAt(),
+  /** 0008: muda a cada UPDATE pelo drizzle (relogio do banco); compoe a versao do cache semantico. */
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => sql`now()`),
 });
 
 export const chunks = pgTable(

@@ -4,8 +4,8 @@ import express from 'express';
 import request from 'supertest';
 import { afterAll, beforeAll, expect, it } from 'vitest';
 import { loadConfig } from '@docmind/config';
-import { chunks, collections, conversations, createDb, documents, eq, messages, organizations, usageEvents, users, withOrg, type DbHandle } from '@docmind/db';
-import { createLLM, extractiveAnswer, hashEmbed, LocalProvider, type ChatMessage } from '@docmind/llm';
+import { chunks, collections, conversations, createDb, documents, eq, globalMonthlyTokens, messages, organizations, sql, usageEvents, users, withOrg, type DbHandle } from '@docmind/db';
+import { createLLM, extractiveAnswer, hashEmbed, LocalProvider, type CallOptions, type ChatMessage } from '@docmind/llm';
 import { createQueue } from '@docmind/queue';
 import { createStorage } from '@docmind/storage';
 import { API_PREFIX } from '@docmind/shared';
@@ -382,4 +382,48 @@ it('GET /conversations/:id devolve warnings:["reindex_needed"] só quando a cole
   expect((await detail(mixed.collectionId)).warnings).toBeUndefined();
   expect((await detail()).warnings).toBeUndefined();
   expect((await get('/conversations', u)).body.items[0]).not.toHaveProperty('warnings'); // a lista não calcula aviso
+});
+
+it('tokens reais do provider (embedding + geração) chegam ao usage_events, ao /usage e ao teto global; agente que falha no stream registra o parcial', async () => {
+  class Billed extends LocalProvider {
+    override async embed(t: string[], opts?: CallOptions) {
+      opts?.onUsage?.({ inputTokens: 7, outputTokens: 0 });
+      return super.embed(t);
+    }
+    override async *generateStream(m: ChatMessage[], opts?: CallOptions): AsyncIterable<string> {
+      yield* super.generateStream(m);
+      opts?.onUsage?.({ inputTokens: 1000, outputTokens: 50 });
+    }
+  }
+  const billed = buildApp({ config, db, llm: new Billed(), queue: createQueue(), storage: createStorage({ dir: './data/test' }) });
+  const orgId = await mkOrg('real-usage');
+  const u = await mkUser(orgId, 'real');
+  const { collectionId } = await seed(orgId);
+  const conv = (await post('/conversations', u, { collectionId })).body;
+  const globalTotal = async () => {
+    const [r] = await db.db.select({ t: sql<number>`coalesce(sum(${usageEvents.tokensIn} + ${usageEvents.tokensOut}), 0)` }).from(usageEvents);
+    return Number(r!.t);
+  };
+  const before = await globalTotal();
+  const r = await request(billed).post(url(`/conversations/${conv.id}/messages`)).set('Authorization', `Bearer ${u.token}`).buffer(true).parse(rawBody).send({ content: 'Qual o prazo de entrega?' });
+  expect(events(r.body).at(-1)).toMatchObject({ type: 'done', tokensIn: 1007, tokensOut: 50 });
+  const usage = (await request(billed).get(url('/usage')).set('Authorization', `Bearer ${u.token}`)).body;
+  expect(usage).toMatchObject({ tokensIn: 1007, tokensOut: 50 }); // o /usage soma o gravado, não a estimativa
+  expect((await globalTotal()) - before).toBe(1057); // base do teto global (db/usage.ts)
+  // `now` 60 s à frente fura o cache de 30 s do teto e lê o banco; é a soma que o teto compara com GLOBAL_MONTHLY_TOKEN_LIMIT
+  expect(await globalMonthlyTokens(db.db, new Date(Date.now() + 60_000))).toBe(before + 1057);
+
+  // modo agente com o stream caindo: o runner grava o gasto parcial (embedding + prompt estimado) em vez de perder
+  class Broken extends Billed {
+    override async *generateStream(): AsyncIterable<string> {
+      yield 'resposta parcial';
+      throw new Error('stream caiu');
+    }
+  }
+  const broken = buildApp({ config, db, llm: new Broken(), queue: createQueue(), storage: createStorage({ dir: './data/test' }) });
+  const rows0 = (await withOrg(db.db, orgId, (tx) => tx.select().from(usageEvents))).length;
+  await request(broken).post(url('/agent/run')).set('Authorization', `Bearer ${u.token}`).send({ query: 'qual o prazo de entrega?', collectionId }).buffer(true).parse(rawBody);
+  const rows = await withOrg(db.db, orgId, (tx) => tx.select().from(usageEvents));
+  expect(rows).toHaveLength(rows0 + 1);
+  expect(rows.at(-1)!.tokensIn).toBeGreaterThan(7);
 });

@@ -2,10 +2,10 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, beforeAll, expect, it } from 'vitest';
-import { chunks, collections, documents, eq, users, usageEvents, withOrg } from '@docmind/db';
+import { chunks, collections, documents, eq, orgScope, users, usageEvents, withOrg } from '@docmind/db';
 import { createLLM, createReranker } from '@docmind/llm';
 import { FsStorage } from '@docmind/storage';
-import { createRag, NO_ANSWER, type AnswerEvent } from '@docmind/retrieval';
+import { createRag, NO_ANSWER, SemanticCache, type AnswerEvent, type Cached } from '@docmind/retrieval';
 import { processDocument } from '../../apps/worker/src/index';
 import { fixture, QA } from '../fixtures';
 import { setupDb } from './helpers';
@@ -30,8 +30,7 @@ async function ingestFixture(orgId: string, filename: string) {
   return { collectionId: c!.id, documentId: d!.id };
 }
 
-async function ask(orgId: string, question: string, collectionId: string | null = null) {
-  const rag = createRag({ db: ctx.h.db, llm, reranker: createReranker() });
+async function ask(orgId: string, question: string, collectionId: string | null = null, rag = createRag({ scope: orgScope(ctx.h.db), llm, reranker: createReranker() })) {
   let result: Extract<AnswerEvent, { type: 'result' }> | undefined;
   for await (const e of rag.answer({ orgId, userId: userOf[orgId]!, collectionId, question, history: [] })) if (e.type === 'result') result = e;
   return result!;
@@ -91,11 +90,33 @@ it('org A nunca recebe conteudo ou citacao do documento da org B', async () => {
 
 it('pergunta sem nenhum trecho relevante devolve a mensagem padrao, sem citacoes', async () => {
   const lone = await setupDb();
-  const rag = createRag({ db: lone.h.db, llm, reranker: createReranker() });
+  const rag = createRag({ scope: orgScope(lone.h.db), llm, reranker: createReranker() });
   const [u] = await lone.h.db.insert(users).values({ organizationId: lone.orgA, email: 'z@x.com', name: 'z', passwordHash: 'x' }).returning();
   let result: Extract<AnswerEvent, { type: 'result' }> | undefined;
   for await (const e of rag.answer({ orgId: lone.orgA, userId: u!.id, collectionId: null, question: 'qualquer coisa', history: [] })) if (e.type === 'result') result = e;
   expect(result!.content).toBe(NO_ANSWER);
   expect(result!.citations).toEqual([]);
   await lone.h.close();
+});
+
+it('worker em outro processo (sem invalidateCache, como com REDIS_URL): reprocessar ou excluir nao deixa o cache semantico servir a resposta antiga', async () => {
+  const rag = createRag({ scope: orgScope(ctx.h.db), llm, reranker: createReranker(), cache: new SemanticCache<Cached>() }); // o cache da API
+  const { collectionId, documentId } = await ingestFixture(ctx.orgA, 'reembolso.txt');
+  const q = 'Qual o limite diario para alimentacao?';
+  expect((await ask(ctx.orgA, q, collectionId, rag)).content).toContain('R$ 120,00');
+  expect((await ask(ctx.orgA, q, collectionId, rag)).cached).toBe(true);
+
+  // o worker de outro processo reprocessa com conteudo novo; esta API nao e avisada (apps/worker/src/main.ts nao tem invalidateCache)
+  const [doc] = await ctx.h.db.select().from(documents).where(eq(documents.id, documentId));
+  await storage.put(doc!.storageKey, Buffer.from(fixture('reembolso.txt').toString('utf8').replace('R$ 120,00', 'R$ 150,00')));
+  await processDocument({ organizationId: ctx.orgA, documentId }, { db: ctx.h.db, storage, llm, retries: 0, baseMs: 0 });
+  const fresh = await ask(ctx.orgA, q, collectionId, rag);
+  expect(fresh.cached).toBe(false);
+  expect(fresh.content).toContain('R$ 150,00');
+
+  // exclusao feita por outro processo (outra replica, cron da demo): idem
+  await ctx.h.db.delete(documents).where(eq(documents.id, documentId));
+  const gone = await ask(ctx.orgA, q, collectionId, rag);
+  expect(gone.cached).toBe(false);
+  expect(gone.content).toBe(NO_ANSWER);
 });

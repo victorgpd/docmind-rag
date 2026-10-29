@@ -6,9 +6,10 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState, type ComponentType, type ReactNode } from 'react';
 import type { Organization } from '@docmind/shared';
 import { api as chatApi, type Usage } from '../features/chat/api';
+import { GITHUB_URL } from '../config/site';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth';
-import { ChartIcon, ChatIcon, ChevronsIcon, FolderIcon, HistoryIcon, Logo, LogoutIcon, MenuIcon } from './icons';
+import { ChartIcon, ChatIcon, ChevronsIcon, FolderIcon, GithubIcon, HistoryIcon, Logo, LogoutIcon, MenuIcon } from './icons';
 import { ThemeToggle } from './ThemeToggle';
 import { Skeleton } from './ui';
 
@@ -222,6 +223,9 @@ export function Shell({ children }: { children: ReactNode }) {
             {crumb && <span className="font-medium text-fg">{crumb}</span>}
           </p>
           <span className="flex-1" />
+          <a href={GITHUB_URL} target="_blank" rel="noopener noreferrer" aria-label="Código no GitHub" className="flex size-9 items-center justify-center rounded-lg !text-muted hover:bg-subtle hover:!text-fg">
+            <GithubIcon size={18} />
+          </a>
           <ThemeToggle />
           </div>
         </header>

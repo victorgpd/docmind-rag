@@ -8,7 +8,7 @@ Fila `INGEST_QUEUE = 'ingest-document'`, payload `{organizationId, documentId}`.
 1. `processDocument` carrega o documento (filtrando por organização) e marca `processing`.
 2. `ingest()`: extrai (PDF por página, DOCX, TXT, MD, HTML/URL) → limpa (cabeçalho/rodapé repetidos, hifenização) → chunk (~500 tokens, 15% de sobreposição, página de início e seção) → contexto do chunk → embeddings em lotes de 32.
 3. Numa transação apaga os chunks antigos do documento e insere os novos (reprocessar é idempotente), grava `usage_events` `ingest` e `embed`.
-4. Marca `ready` (com `page_count`) ou `failed` (com `error`) e chama `invalidateCache({organizationId, collectionId})`.
+4. Marca `ready` (com `page_count`) ou `failed` (com `error`) e chama `invalidateCache({organizationId, collectionId})`. Em processo separado (REDIS_URL) não há `invalidateCache`: a API percebe a mudança porque a chave do cache semântico inclui a versão dos documentos do escopo (contagem + `max(updated_at)`, migration `0008`).
 
 Status: `pending → processing → ready | failed`. O SSE `/documents/:id/events` consulta o banco. `onStatus` é opcional.
 Contexto do chunk: por padrão, em qualquer provider, uma frase determinística (documento, seção, página). `INGEST_LLM_CONTEXT=true` (opt-in) pede ao LLM, 1 chamada de chat por chunk (custo e privacidade com provedor externo), com fallback para a determinística. O contexto entra só no embedding; `chunks.content` guarda o texto original. Provider via `createLLMFromConfig` (`LLM_PROVIDER`); cada chunk grava `embedding_model` (ex. `local:hash-v2:384`, `openai:text-embedding-3-small:384`) e os `usage_events` usam os tokens reais do provedor quando ele informa (senão a estimativa). Embeddings saem em lotes de no máximo 100.
@@ -16,7 +16,8 @@ Contexto do chunk: por padrão, em qualquer provider, uma frase determinística 
 ## Retries
 - Falha transitória (rede, 5xx, 429, embedding): até 2 retries com backoff exponencial (base 500 ms). Provedor externo (`openai`) já faz o próprio backoff: falha dele vira `provider_error` sem retry aqui, para não empilhar tentativas nem reembedar (e recobrar) lotes já pagos; reprocesse depois.
 - `PermanentError` não repete: tipo não suportado, arquivo corrompido, documento sem texto, 4xx, URL bloqueada.
-- Esgotadas as tentativas, o documento vira `failed`. O worker nunca lança.
+- Esgotadas as tentativas, o documento vira `failed` e o job termina sem erro: a fila não repete o que já foi gravado.
+- A fila só repete quando o worker não conseguiu ler o documento ou gravar o desfecho (banco fora): 3 tentativas com backoff exponencial de 1 s (`RETRY` em `packages/queue`), igual no BullMQ (`attempts`) e na fila em memória. Reprocessar é idempotente.
 
 ## Erros e limites
 `documents.error` guarda só uma mensagem controlada por categoria (`USER_MESSAGES` em `packages/ingest/src/types.ts`); o detalhe técnico (caminhos, mensagens de libs) vai só para o log. Categorias: `unsupported_type`, `corrupt_file`, `unsafe_file`, `no_text`, `url_blocked`, `fetch_failed`, `too_large`, `timeout`, `provider_error`, `internal` (qualquer erro não classificado).
@@ -27,7 +28,7 @@ Tetos contra expansão, em `packages/config` (`.env.example`); estourar um deles
 - `INGEST_JOB_TIMEOUT_S` (300): tempo por job, retries incluídos; checado entre etapas e lotes de embedding, a extração em si não é interrompível.
 
 ## Recuperação e concorrência
-- No boot, documentos em `processing` voltam para a fila (`recoverStuck`). Sem `updated_at` não há timeout; assume um único worker.
+- No boot, documentos em `processing` voltam para a fila (`recoverStuck`). `documents.updated_at` existe (migration `0008`), mas `recoverStuck` não o usa para medir a idade do job e não há timeout de recuperação; assume um único worker.
 - `WORKER_CONCURRENCY` (padrão 1) limita jobs simultâneos por processo. O mesmo documento nunca roda em paralelo.
 - SIGINT/SIGTERM: `stop()` espera os jobs correntes e descarta os que não começaram (ficam como estavam).
 - Reembeddar tudo (ex.: após mudar o embedding): pare a API e rode `pnpm --filter @docmind/worker reindex`.

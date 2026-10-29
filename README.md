@@ -4,6 +4,8 @@
 
 Plataforma multi-tenant em que empresas enviam documentos (PDF, DOCX, TXT, Markdown, URL) e fazem perguntas com **resposta em streaming e citação exata da fonte** (documento + página + trecho). RAG híbrido, fila de ingestão, avaliação automática e **100% local por padrão (nenhuma API externa ou chave)**; OpenAI é um provider opcional (`LLM_PROVIDER=openai`, ver `docs/RODAR.md`).
 
+**[Testar sem cadastro](https://docmind.nexuscrmm.com)** — demo ao vivo, em uma conta somente leitura.
+
 **Demo ao vivo:** [https://docmind.nexuscrmm.com](https://docmind.nexuscrmm.com) (botão **Experimentar a demonstração**)
 
 ![Demo do DocMind](docs/demo/docmind-demo.gif)
@@ -18,7 +20,7 @@ Plataforma multi-tenant em que empresas enviam documentos (PDF, DOCX, TXT, Markd
 
 ## Experimente
 
-Em produção: **[docmind.nexuscrmm.com](https://docmind.nexuscrmm.com)**. Clique em **Experimentar a demonstração** (na página inicial ou no login) para entrar, sem cadastro, numa conta somente leitura com políticas fictícias de uma empresa de exemplo e perguntar, por exemplo, "Quantos dias de férias o colaborador tem direito?". Conversas da demonstração são apagadas após 24 h; para enviar seus documentos, crie uma conta. Como habilitar: [`docs/DEPLOY.md`](docs/DEPLOY.md#conta-de-demonstração).
+Em produção: **[docmind.nexuscrmm.com](https://docmind.nexuscrmm.com)**. Clique em **Testar sem cadastro** (na página inicial ou no login) para entrar, sem cadastro, numa conta somente leitura com políticas fictícias de uma empresa de exemplo e perguntar, por exemplo, "Quantos dias de férias o colaborador tem direito?". Conversas da demonstração são apagadas após 24 h; para enviar seus documentos, crie uma conta. Como habilitar: [`docs/DEPLOY.md`](docs/DEPLOY.md#conta-de-demonstração).
 
 ## Arquitetura
 
@@ -146,3 +148,7 @@ Mais documentação: [arquitetura](docs/ARCHITECTURE.md) · [como rodar](docs/RO
 ## Como foi construído
 
 Projeto desenvolvido com assistência de IA: boa parte do código foi escrita com um assistente de programação, com revisão e com as decisões técnicas (contexto, decisão e consequências) registradas em [`docs/adr/`](docs/adr/). A confiança vem das verificações, não da ferramenta: lint, typecheck e testes no CI ([`ci.yml`](.github/workflows/ci.yml)), avaliação do RAG em cada pull request ([`eval.yml`](.github/workflows/eval.yml)) e revisões de segurança em [`docs/REVISAO-SEGURANCA.md`](docs/REVISAO-SEGURANCA.md).
+
+## Autor
+
+**Victor Guilherme** · [LinkedIn](https://www.linkedin.com/in/victorgpd/) · [GitHub (repositório público)](https://github.com/victorgpd/docmind-rag)

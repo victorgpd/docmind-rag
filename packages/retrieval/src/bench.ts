@@ -1,6 +1,6 @@
 // Carga leve da busca: `pnpm --filter @docmind/retrieval bench [chunks] [consultas]` (padrão 5000 / 40).
 // Mede, em PGlite em memória com HNSW + GIN, a latência p50/p95 de cada etapa e do pipeline completo.
-import { chunks, collections, createDb, documents, organizations, sql, users } from '@docmind/db';
+import { chunks, collections, createDb, documents, organizations, orgScope, sql, users } from '@docmind/db';
 import { createReranker, hashEmbed, LocalProvider } from '@docmind/llm';
 import { buildMessages } from './prompt';
 import { createRag, SemanticCache, retrieve, DEFAULT_RANK } from './index';
@@ -49,11 +49,11 @@ async function measure(label: string) {
   const stage: Record<string, number[]> = { embed: [], vector: [], text: [], fuse: [], rank: [], retrieve: [], prompt: [], generate: [], answer: [] };
   const push = (k: string, v: number) => stage[k]!.push(v);
   // aquecimento (JIT, planos de consulta)
-  for (const q of queries.slice(0, 3)) await retrieve({ db: h.db, llm, reranker, rank }, { orgId: org!.id, query: q, collectionId: col!.id });
+  for (const q of queries.slice(0, 3)) await retrieve({ scope: orgScope(h.db), llm, reranker, rank }, { orgId: org!.id, query: q, collectionId: col!.id });
   for (const q of queries) {
     const timings: Record<string, number> = {};
     t = performance.now();
-    const r = await retrieve({ db: h.db, llm, reranker, rank }, { orgId: org!.id, query: q, collectionId: col!.id, timings });
+    const r = await retrieve({ scope: orgScope(h.db), llm, reranker, rank }, { orgId: org!.id, query: q, collectionId: col!.id, timings });
     push('retrieve', performance.now() - t);
     for (const k of ['embed', 'vector', 'text', 'fuse', 'rank']) push(k, timings[k] ?? 0);
     t = performance.now();
@@ -63,7 +63,7 @@ async function measure(label: string) {
     for await (const _ of llm.generateStream(messages)) void _;
     push('generate', performance.now() - t);
     t = performance.now();
-    for await (const _ of createRag({ db: h.db, llm, reranker, cache: new SemanticCache(), rank }).answer({
+    for await (const _ of createRag({ scope: orgScope(h.db), llm, reranker, cache: new SemanticCache(), rank }).answer({
       orgId: org!.id, userId: user!.id, collectionId: col!.id, question: q, history: [],
     }))
       void _;

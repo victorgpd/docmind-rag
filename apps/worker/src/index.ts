@@ -51,7 +51,7 @@ export function ingestOptionsFromConfig(c: Config) {
   } satisfies Pick<WorkerDeps, 'concurrency' | 'jobTimeoutMs' | 'limits' | 'llmContext' | 'globalTokenLimit'>;
 }
 
-/** Processa um documento: nunca lanca; o resultado fica em documents.status/error. */
+/** Processa um documento; o resultado fica em documents.status/error. So lanca sem banco (nao leu o documento ou nao gravou o desfecho): a fila repete (RETRY). */
 export async function processDocument(job: IngestJob, deps: WorkerDeps): Promise<void> {
   const { db, storage, llm } = deps;
   const { organizationId, documentId } = job;
@@ -127,14 +127,14 @@ export async function processDocument(job: IngestJob, deps: WorkerDeps): Promise
     // usuario ve so a categoria (documents.error); o detalhe tecnico fica no log
     const code = errorCode(e);
     console.error('[worker] falha', documentId, code, e instanceof Error ? e.message : String(e));
-    await setStatus('failed', { error: userMessage(e) }).catch((err) => console.error('[worker] nao foi possivel gravar status failed', err));
+    await setStatus('failed', { error: userMessage(e) }); // sem gravar (banco fora) o erro sobe e a fila repete o job; senao ficaria em processing
     await settled();
   }
 }
 
 /**
  * Documentos presos em 'processing' (processo morreu no meio) voltam para a fila; processDocument e idempotente.
- * shortcut: assume um unico worker; com varios workers num Redis compartilhado isso pode reprocessar um job vivo (sem updated_at para medir idade).
+ * shortcut: assume um unico worker; com varios workers num Redis compartilhado isso pode reprocessar um job vivo (updated_at existe, mas nao e usado para medir idade).
  */
 export async function recoverStuck(queue: Queue, db: Db): Promise<number> {
   const stuck = await db.select({ id: documents.id, organizationId: documents.organizationId }).from(documents).where(eq(documents.status, 'processing'));

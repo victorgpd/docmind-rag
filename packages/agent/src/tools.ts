@@ -73,7 +73,7 @@ export const searchTool = {
   }),
   output: z.object({ passages: z.array(Passage.extend({ n: z.number().int().positive() })) }),
   async run(i: { query: string; collectionId?: string | undefined; topK: number }, ctx: ToolCtx) {
-    const found = await ctx.retriever.search(ctx.orgId, { query: i.query, collectionId: i.collectionId, topK: i.topK });
+    const found = await ctx.retriever.search(ctx.orgId, { query: i.query, collectionId: i.collectionId, topK: i.topK, onUsage: ctx.countUsage });
     // abstencao: sem relevancia suficiente o agente nao usa os trechos (mesmo corte do createRag)
     const hits = found.filter((h) => h.relevance === undefined || h.relevance >= ctx.minRelevance);
     return { passages: hits.map((h) => ({ ...passageOf(h), n: ctx.cite(passageOf(h)) })) };

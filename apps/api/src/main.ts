@@ -12,6 +12,8 @@ import { notifyDocumentChange } from './routes/documents';
 import { demoMaintenance } from './scripts/demo-maintenance';
 
 const config = loadConfig();
+// db.db e a conexao privilegiada (ignora RLS). So a usam: migrations, worker, auth/refresh_tokens, usuario demo (http/demo.ts),
+// teto global (soma de todas as orgs), /ready e a manutencao da demo. Dado de organizacao passa por withOrg/orgScope (RLS).
 const db = await createDb({ databaseUrl: config.DATABASE_URL, pgliteDir: config.PGLITE_DIR });
 await db.migrate();
 const llm = createLLMFromConfig(config); // a chave (OPENAI_API_KEY) so passa por aqui; nunca logue o config inteiro (redactConfig)

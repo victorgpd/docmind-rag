@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { NO_ANSWER, rankConfigFromEnv } from '@docmind/retrieval';
 import { Citation } from '@docmind/shared';
-import type { ChatMessage, LLMProvider } from '@docmind/llm';
+import type { ChatMessage, LLMProvider, Usage } from '@docmind/llm';
 import { detectIntent, nextAction, type AgentRequest, type Intent, type StepRecord } from './planner';
 import { groundedMessages } from './prompt';
 import { TOOLS } from './tools';
@@ -45,9 +45,11 @@ export type AgentDeps = {
   maxSteps?: number;
   /** Corte de relevancia da busca (padrao: RAG_MIN_RELEVANCE, o mesmo do chat). */
   minRelevance?: number;
+  /** Contador do chamador, atualizado in loco: sobrevive a erro/abort (sem `result`), para o runner registrar o gasto parcial. */
+  usage?: { in: number; out: number };
 };
 
-// shortcut: tokens estimados por chars/4 (provider local nao reporta uso); trocar se o provider passar a reportar
+// estimativa por chars/4 so quando o provider nao informa o uso real (local/ollama); a OpenAI informa via onUsage
 const tokens = (s: string) => Math.ceil(s.length / 4);
 
 function compose(intent: Intent, data: any): string {
@@ -76,7 +78,7 @@ export async function* runAgent(rawReq: AgentRequest, deps: AgentDeps): AsyncGen
   const started = Date.now();
   const req = AgentRequestSchema.parse(rawReq);
   const maxSteps = deps.maxSteps ?? 4;
-  const usage = { in: 0, out: 0 };
+  const usage = deps.usage ?? { in: 0, out: 0 };
   const cites: Passage[] = [];
   const ctx: ToolCtx = {
     orgId: deps.orgId,
@@ -88,11 +90,20 @@ export async function* runAgent(rawReq: AgentRequest, deps: AgentDeps): AsyncGen
       const i = cites.findIndex((c) => c.documentId === p.documentId && c.page === p.page && c.snippet === p.snippet);
       return i >= 0 ? i + 1 : cites.push(p);
     },
+    countUsage(u) {
+      usage.in += u.inputTokens;
+      usage.out += u.outputTokens;
+    },
     async generate(messages: ChatMessage[]) {
-      usage.in += tokens(messages.map((m) => m.content).join('\n'));
+      const real: { usage?: Usage } = {};
       let out = '';
-      for await (const c of deps.llm.generateStream(messages)) out += c;
-      usage.out += tokens(out);
+      try {
+        for await (const c of deps.llm.generateStream(messages, { onUsage: (u) => (real.usage = u) })) out += c;
+      } finally {
+        // erro ou corte no meio do stream: sem informe do provider, conta o enviado e o já gerado
+        usage.in += real.usage?.inputTokens ?? tokens(messages.map((m) => m.content).join('\n'));
+        usage.out += real.usage?.outputTokens ?? tokens(out);
+      }
       return out;
     },
   };

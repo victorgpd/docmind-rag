@@ -1,4 +1,4 @@
-import { sql, withOrg, type Db } from '@docmind/db';
+import { sql, type OrgScope } from '@docmind/db';
 
 /** Valor de `warnings` quando há chunks de outro modelo de embedding (ou desconhecido) no escopo da busca. */
 export const REINDEX_NEEDED = 'reindex_needed';
@@ -15,7 +15,7 @@ const key = (orgId: string, collectionId: string | null | undefined, model: stri
  * e é descartado por `invalidate` (documento ficou ready/foi excluído). Em escala, indexar chunks(organization_id, embedding_model).
  */
 export async function hasStaleEmbeddings(
-  db: Db,
+  scope: OrgScope,
   { orgId, collectionId, embeddingModel }: { orgId: string; collectionId?: string | null; embeddingModel?: string },
   now = Date.now(),
 ): Promise<boolean> {
@@ -23,7 +23,7 @@ export async function hasStaleEmbeddings(
   const k = key(orgId, collectionId, embeddingModel);
   const hit = memo.get(k);
   if (hit && now - hit.at < TTL_MS) return hit.stale;
-  const stale = await withOrg(db, orgId, async (tx) => {
+  const stale = await scope(orgId, async (tx) => {
     const col = collectionId ? sql`and collection_id = ${collectionId}` : sql``;
     const r: any = await tx.execute(sql`select 1 as x from chunks where embedding_model is distinct from ${embeddingModel} ${col} limit 1`);
     return (r.rows ?? r).length > 0;

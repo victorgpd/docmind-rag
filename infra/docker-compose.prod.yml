@@ -99,7 +99,7 @@ services:
   # Storage interno (padrao). As credenciais sao as mesmas S3_ACCESS_KEY/S3_SECRET_KEY que a API usa.
   minio:
     profiles: [minio]
-    image: bitnamilegacy/minio:latest # congelado (Bitnami legacy); para algo mantido use R2/S3 gerenciado
+    image: bitnamilegacy/minio:2025.5.24-debian-12-r5 # = digest do :latest (451fe68...); congelado (Bitnami legacy): para algo mantido use R2/S3 gerenciado
     restart: unless-stopped
     environment:
       MINIO_ROOT_USER: ${S3_ACCESS_KEY:?defina S3_ACCESS_KEY}
@@ -117,7 +117,7 @@ services:
 
   minio-init:
     profiles: [minio]
-    image: bitnamilegacy/minio:latest
+    image: bitnamilegacy/minio:2025.5.24-debian-12-r5
     depends_on:
       minio: { condition: service_healthy }
     entrypoint: >
@@ -178,7 +178,7 @@ services:
   # Unica saida para a internet publica: tunel de saida para a Cloudflare (sem abrir portas). Hostname publico -> http://web:3000.
   cloudflared:
     profiles: [tunnel]
-    image: cloudflare/cloudflared:latest # roda como usuario nao-root (nonroot); fixe uma tag em producao se quiser
+    image: cloudflare/cloudflared:2026.10.0 # tag fixa (atualize de proposito); roda como usuario nao-root (65532)
     restart: unless-stopped
     command: tunnel --no-autoupdate run
     environment:

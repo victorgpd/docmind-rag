@@ -12,9 +12,12 @@ RUN --mount=type=cache,target=/pnpm/store pnpm fetch
 
 FROM deps AS build
 COPY . .
-RUN --mount=type=cache,target=/pnpm/store pnpm install --offline --frozen-lockfile
+# So dependencias de producao da API e dos pacotes do workspace que ela importa, mais o tsx (dependencies da raiz: roda o TS no runtime
+# e no cron da demo, /app/node_modules/.bin/tsx). Fora: web, tests, evals e devDependencies (next, mermaid, typescript, turbo, eslint...).
+# O `pnpm fetch` deixou o virtual store inteiro em node_modules: apaga e instala do store (cache), offline.
+RUN --mount=type=cache,target=/pnpm/store rm -rf node_modules && pnpm install --offline --frozen-lockfile --prod --filter docmind --filter "@docmind/api..."
 
-# shortcut: devDependencies (tsx) ficam na imagem pois roda via tsx; trocar por build JS quando existir. Sem pnpm no runtime (corepack baixaria como node).
+# shortcut: roda TS via tsx; trocar por build JS quando existir. Sem pnpm no runtime (corepack baixaria como node).
 FROM base AS runtime
 ENV NODE_ENV=production
 COPY --from=build --chown=node:node /app /app

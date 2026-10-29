@@ -1,3 +1,4 @@
+import { demoEnabledOnServer } from '../src/lib/demo-server';
 import { Landing } from '../src/components/Landing';
 import { LandingRedirect } from '../src/components/LandingRedirect';
 
@@ -6,11 +7,12 @@ export const metadata = {
   description: 'Envie seus arquivos, converse em português e receba respostas com citações verificáveis.',
 };
 
-export default function Home() {
+export default async function Home() {
+  const demoEnabled = await demoEnabledOnServer();
   return (
     <>
       <LandingRedirect />
-      <Landing />
+      <Landing demoEnabled={demoEnabled} />
     </>
   );
 }

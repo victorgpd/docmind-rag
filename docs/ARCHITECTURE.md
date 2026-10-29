@@ -26,7 +26,8 @@ Regra: mudanca em contrato (`shared`, schema do `db`) afeta todos os consumidore
 - `shared` nao depende de nada interno; todos os demais podem depender dele.
 - `db`: `createDb({databaseUrl?, pgliteDir?}) -> {db, kind, migrate(), close()}`.
   `withOrg(db, orgId, tx => ...)` abre transacao, faz `SET LOCAL ROLE docmind_app` e `app.org_id`; TODA query de dados de tenant deve passar por ele.
-  A conexao crua (`handle.db`) e privilegiada (ignora RLS): so para auth/login, worker e migrations.
+  `orgScope(db)` devolve so a funcao `(orgId, fn) => withOrg(...)`: busca, chat, agente e aviso de reindexacao recebem isso, nunca o `Db`.
+  A conexao crua (`handle.db`) e privilegiada (ignora RLS): so para auth/login e refresh, worker, migrations, usuario demo, teto global de tokens (soma de todas as orgs), `/ready` e manutencao da demo (lista em `apps/api/src/main.ts`).
 - `llm`: `embed(texts) -> number[384][]`, `generateStream(messages) -> AsyncIterable<string>`, `generateObject(zodSchema, messages)`.
   O gerador `local` e extrativo: le linhas `[n] trecho` nas mensagens e responde citando `[n]`. Embeddings sempre 384 dims (coluna `vector(384)`).
 - `queue`: `enqueue(name, payload)`, `process(name, handler)`. Job de ingestao: `INGEST_QUEUE` / `IngestJob` em apps/worker.

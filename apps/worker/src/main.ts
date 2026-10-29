@@ -15,6 +15,7 @@ const handle = await createDb({ databaseUrl: config.DATABASE_URL, pgliteDir: con
 await handle.migrate();
 const queue = createQueue({ redisUrl: config.REDIS_URL });
 // Cache semantico vive na memoria da API: neste processo separado nao ha o que invalidar (invalidateCache fica de fora).
+// A API percebe a mudanca pela versao na chave do cache (contagem + max(updated_at) dos documentos; retrieval/answer.ts).
 const worker = startWorker(queue, {
   db: handle.db,
   storage: createStorage({ dir: config.STORAGE_DIR, s3Endpoint: config.S3_ENDPOINT }),

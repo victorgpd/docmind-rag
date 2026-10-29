@@ -169,6 +169,10 @@ overrides:
 importers:
 
   .:
+    dependencies:
+      tsx:
+        specifier: ^4.19.2
+        version: 4.23.15
     devDependencies:
       '@eslint/js':
         specifier: ^9.17.0
@@ -182,9 +186,6 @@ importers:
       prettier:
         specifier: ^3.4.2
         version: 3.9.10
-      tsx:
-        specifier: ^4.19.2
-        version: 4.23.15
       turbo:
         specifier: ^2.3.3
         version: 2.11.10

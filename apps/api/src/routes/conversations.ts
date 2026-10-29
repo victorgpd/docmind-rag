@@ -1,4 +1,4 @@
-import { and, collections, conversations, desc, eq, messages } from '@docmind/db';
+import { and, collections, conversations, desc, eq, messages, orgScope } from '@docmind/db';
 import { hasStaleEmbeddings, REINDEX_NEEDED } from '@docmind/retrieval';
 import { CreateConversationBody, type Citation } from '@docmind/shared';
 import { Router, type Request } from 'express';
@@ -58,7 +58,7 @@ export function conversationsRouter(deps: Deps) {
     const c = await findOwnConversation(req, req.params.id as string);
     const rows = await withOrg(req, (tx) => tx.select().from(messages).where(eq(messages.conversationId, c.id)).orderBy(messages.createdAt));
     // a coleção (ou a org, sem coleção) tem chunks de outro modelo de embedding? Memo de 60 s, limpo quando um documento muda
-    const stale = await hasStaleEmbeddings(deps.db.db, { orgId: req.auth.orgId, collectionId: c.collectionId, embeddingModel: deps.llm.embeddingModel });
+    const stale = await hasStaleEmbeddings(orgScope(deps.db.db), { orgId: req.auth.orgId, collectionId: c.collectionId, embeddingModel: deps.llm.embeddingModel });
     res.json({ ...toConversation(c), messages: rows.map(toMessage), ...(stale && { warnings: [REINDEX_NEEDED] }) });
   });
 

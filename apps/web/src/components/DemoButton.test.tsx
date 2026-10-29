@@ -30,14 +30,14 @@ describe('DemoButton', () => {
     const f = stubApi(false);
     render(<AuthProvider><DemoButton /></AuthProvider>);
     await waitFor(() => expect(f.mock.calls.some(([u, i]) => String(u).endsWith('/auth/demo') && !i?.method)).toBe(true));
-    expect(screen.queryByRole('button', { name: 'Experimentar a demonstração' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Testar sem cadastro' })).toBeNull();
   });
 
   it('ligada: o clique chama POST /auth/demo e a sessao fica marcada como demo', async () => {
     const f = stubApi(true);
     render(<AuthProvider><DemoButton /><Probe /></AuthProvider>);
     await waitFor(() => expect(screen.getByTestId('probe').textContent).toBe('anon:false'));
-    fireEvent.click(await screen.findByRole('button', { name: 'Experimentar a demonstração' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Testar sem cadastro' }));
     await waitFor(() => expect(screen.getByTestId('probe').textContent).toBe('authed:true'));
     expect(f.mock.calls.some(([u, i]) => String(u).endsWith('/auth/demo') && i?.method === 'POST')).toBe(true);
   });

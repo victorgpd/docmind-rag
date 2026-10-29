@@ -10,8 +10,8 @@ function cosine(a: number[], b: number[]): number {
 
 /**
  * Cache semântico em memória: perguntas com embedding quase igual (cosseno >= threshold) reusam a resposta.
- * `key` isola tenant/coleção. shortcut: por processo, varredura linear e só TTL para invalidar
- * (documento apagado ainda pode ser citado até expirar); trocar por tabela/Redis ao escalar.
+ * `key` isola tenant/coleção e traz a versão do índice (answer.ts): documento novo, reprocessado ou apagado muda a chave.
+ * shortcut: por processo, varredura linear; entradas de versões antigas só saem por TTL/tamanho; trocar por tabela/Redis ao escalar.
  */
 export class SemanticCache<V> {
   private items: { key: string; emb: number[]; value: V; at: number }[] = [];

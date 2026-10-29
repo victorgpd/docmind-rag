@@ -9,7 +9,7 @@ import { DemoButton } from './DemoButton';
 import { Logo } from './icons';
 
 /** Layout dividido: painel de marca (gradiente) + formulário centralizado; uma coluna no mobile. Só HTML/CSS (sem antd). */
-export function AuthPage({ mode }: { mode: 'login' | 'register' }) {
+export function AuthPage({ mode, demoEnabled }: { mode: 'login' | 'register'; demoEnabled?: boolean }) {
   const { status, login, register } = useAuth();
   const router = useRouter();
   const isRegister = mode === 'register';
@@ -48,7 +48,7 @@ export function AuthPage({ mode }: { mode: 'login' | 'register' }) {
             <AuthForm mode={mode} onSubmit={(v) => (isRegister ? register(v) : login({ email: v.email, password: v.password }))} />
           </div>
           {!isRegister && (
-            <DemoButton className="inline-flex h-10 w-full items-center justify-center rounded-lg border border-line-strong bg-surface px-3.5 text-sm font-medium text-fg transition duration-150 hover:bg-subtle" />
+            <DemoButton initialEnabled={demoEnabled} className="inline-flex h-10 w-full items-center justify-center rounded-lg border border-line-strong bg-surface px-3.5 text-sm font-medium text-fg transition duration-150 hover:bg-subtle" />
           )}
           <p className="text-sm text-muted">
             {isRegister ? 'Já tem conta? ' : 'Ainda não tem conta? '}

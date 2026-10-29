@@ -1,5 +1,5 @@
 import type { AgentDeps } from '@docmind/agent';
-import { chunks, collections, createDb, documents, evalRuns, organizations, sql, users, type DbHandle } from '@docmind/db';
+import { chunks, collections, createDb, documents, evalRuns, organizations, orgScope, sql, users, type DbHandle } from '@docmind/db';
 import { chunkPages, cleanPages, embedChunks, extract, fallbackContext } from '@docmind/ingest';
 import { createLLM, createReranker, type CallOptions, type LLMProvider, type Reranker } from '@docmind/llm';
 import { createChunkReader, createRag, createRetriever, retrieve, rewriteQuestion, SemanticCache, type RankConfig } from '@docmind/retrieval';
@@ -64,7 +64,8 @@ export async function createAdapter(
   const rankFor = (rerank: boolean) => (rerank ? rank : PURE_RRF);
   const handle: DbHandle = await createDb(databaseUrl ? { databaseUrl } : { pgliteDir: ':memory:' });
   await handle.migrate();
-  const { db } = handle;
+  const { db } = handle; // privilegiada: so para semear o corpus; busca e agente usam `scope` (RLS)
+  const scope = orgScope(db);
   const usage: LlmUsage = { embedTokens: 0, chatIn: 0, chatOut: 0, embedCalls: 0, chatCalls: 0 };
   const llm = metered(inner, usage);
   const localReranker = createReranker();
@@ -85,7 +86,7 @@ export async function createAdapter(
   });
 
   const rag = (rerank: boolean) =>
-    createRag({ db, llm, reranker: rerank ? localReranker : noRerank, cache: new NoCache<any>(), ...(rankFor(rerank) && { rank: rankFor(rerank)! }) });
+    createRag({ scope, llm, reranker: rerank ? localReranker : noRerank, cache: new NoCache<any>(), ...(rankFor(rerank) && { rank: rankFor(rerank)! }) });
 
   const adapter: RagAdapter = {
     async ingest(docs: CorpusDoc[]) {
@@ -131,7 +132,7 @@ export async function createAdapter(
     async search(question, { rerank }) {
       const query = rewriteQuestion(question, []);
       const r = await retrieve(
-        { db, llm, reranker: rerank ? localReranker : noRerank, rank: rankFor(rerank) },
+        { scope, llm, reranker: rerank ? localReranker : noRerank, rank: rankFor(rerank) },
         { orgId, query, collectionId: col!.id },
       );
       return { hits: r.passages.map(toHit), relevance: r.relevance };
@@ -157,8 +158,8 @@ export async function createAdapter(
     deps: {
       orgId,
       llm,
-      retriever: createRetriever({ db, llm, reranker: localReranker }),
-      chunks: createChunkReader({ db }),
+      retriever: createRetriever({ scope, llm, reranker: localReranker }),
+      chunks: createChunkReader({ scope }),
     },
     docId(name) {
       const id = [...names].find(([, n]) => n === name)?.[0];

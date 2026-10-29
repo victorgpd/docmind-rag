@@ -1,4 +1,4 @@
-import { chunks, createDb, documents, eq, organizations, collections, sql, usageEvents, type DbHandle } from '@docmind/db';
+import { chunks, createDb, documents, eq, organizations, collections, sql, usageEvents, type Db, type DbHandle } from '@docmind/db';
 import { LocalProvider, type LLMProvider } from '@docmind/llm';
 import { FsStorage } from '@docmind/storage';
 import { mkdtemp } from 'node:fs/promises';
@@ -189,6 +189,37 @@ describe('startWorker', () => {
     for (const documentId of ids) await q.enqueue(INGEST_QUEUE, { organizationId: orgId, documentId });
     await until(async () => (await reltuples()) > 0);
     await w.stop();
+  });
+
+  it('retry: banco fora sem gravar o desfecho => a fila repete com backoff; erro permanente gravado nao repete', async () => {
+    // db cuja chamada `nth` de `method` falha uma vez (a conexao caiu e voltou); o startWorker ja faz 1 select (recoverStuck)
+    const blip = (method: 'select' | 'update', nth: number): Db => {
+      let n = 0;
+      return new Proxy(h.db, {
+        get: (t, k) =>
+          k !== method
+            ? Reflect.get(t, k)
+            : (...a: unknown[]) => {
+                if (++n === nth) throw new Error('connection terminated unexpectedly');
+                return (t as any)[k](...a);
+              },
+      });
+    };
+    const once = async (db: Db, filename: string, mimeType: string) => {
+      let gets = 0;
+      const counted = { put: storage.put.bind(storage), delete: storage.delete.bind(storage), get: (k: string) => (gets++, storage.get(k)) };
+      const q = new MemoryQueue({ attempts: 3, backoffMs: 1 });
+      const w = startWorker(q, { db, storage: counted, llm: new LocalProvider(), baseMs: 1 });
+      await w.recovered;
+      const id = await addDoc(filename, mimeType, 'o banco caiu e voltou');
+      await q.enqueue(INGEST_QUEUE, { organizationId: orgId, documentId: id });
+      await until(async () => ['ready', 'failed'].includes(await statusOf(id)));
+      await w.stop();
+      return { status: await statusOf(id), gets };
+    };
+    expect(await once(blip('select', 2), 'r1.txt', 'text/plain')).toEqual({ status: 'ready', gets: 1 }); // falhou ao carregar: 2a tentativa da fila
+    expect(await once(blip('update', 2), 'r2.png', 'image/png')).toEqual({ status: 'failed', gets: 2 }); // nao gravou o failed: a fila repete
+    expect(await once(h.db, 'r3.png', 'image/png')).toEqual({ status: 'failed', gets: 1 }); // permanente gravado: uma vez so
   });
 
   it('o mesmo documento nao roda em paralelo', async () => {

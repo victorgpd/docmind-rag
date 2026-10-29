@@ -23,6 +23,8 @@ export async function audit(page: Page, tela: string, testInfo: TestInfo) {
   // a pagina pode navegar/re-renderizar durante a analise ("Execution context was destroyed"): tenta de novo
   const analisar = async (n = 3): Promise<Awaited<ReturnType<AxeBuilder['analyze']>>> => {
     await page.waitForLoadState('load');
+    // cores medidas no meio de uma transicao (Drawer, fade) dao contraste falso
+    await page.evaluate(() => Promise.allSettled(document.getAnimations().map((a) => a.finished)));
     try {
       return await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze();
     } catch (e) {

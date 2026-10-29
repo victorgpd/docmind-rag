@@ -1,5 +1,5 @@
 import { runAgent, type AgentEvent, type AgentRequestSchema, type ChunkReader, type Retriever } from '@docmind/agent';
-import { usageEvents, type Db } from '@docmind/db';
+import { orgScope, usageEvents, type Db } from '@docmind/db';
 import { createReranker } from '@docmind/llm';
 import { createChunkReader, createRetriever, rankConfigFromEnv } from '@docmind/retrieval';
 import type { Request } from 'express';
@@ -29,23 +29,34 @@ export async function assertWithinLimit(tx: Db, deps: Deps) {
  */
 export function createAgentRunner(deps: Deps, opts: AgentRunnerOpts = {}) {
   const rank = rankConfigFromEnv(deps.config);
-  const retriever = opts.retriever ?? createRetriever({ db: deps.db.db, llm: deps.llm, reranker: createReranker(), rank });
-  const chunks = opts.chunks ?? createChunkReader({ db: deps.db.db });
+  const scope = orgScope(deps.db.db); // busca e leitor de chunks so recebem transacoes com RLS, nunca a conexao privilegiada
+  const retriever = opts.retriever ?? createRetriever({ scope, llm: deps.llm, reranker: createReranker(), rank });
+  const chunks = opts.chunks ?? createChunkReader({ scope });
 
   return {
     rank,
+    scope,
     async *run(req: Request, body: AgentRequest, signal?: AbortSignal): AsyncGenerator<AgentEvent> {
       const { orgId, userId } = req.auth;
-      const events = runAgent(body, { orgId, llm: deps.llm, retriever, chunks, maxSteps: opts.maxSteps, minRelevance: rank.minRelevance });
-      for await (const e of events) {
-        if (e.type === 'result') {
-          const u = e.result.usage;
-          await withOrg(req, (tx) =>
-            tx.insert(usageEvents).values({ organizationId: orgId, userId, kind: 'query', tokensIn: u.tokensIn, tokensOut: u.tokensOut, latencyMs: u.latencyMs }),
-          );
+      const spent = { in: 0, out: 0 };
+      const t0 = Date.now();
+      const record = (tokensIn: number, tokensOut: number, latencyMs: number) =>
+        withOrg(req, (tx) => tx.insert(usageEvents).values({ organizationId: orgId, userId, kind: 'query', tokensIn, tokensOut, latencyMs }));
+      let recorded = false;
+      try {
+        const events = runAgent(body, { orgId, llm: deps.llm, retriever, chunks, maxSteps: opts.maxSteps, minRelevance: rank.minRelevance, usage: spent });
+        for await (const e of events) {
+          if (e.type === 'result') {
+            const u = e.result.usage;
+            recorded = true;
+            await record(u.tokensIn, u.tokensOut, u.latencyMs);
+          }
+          if (signal?.aborted) return; // cliente desconectou: nao executa mais passos
+          yield e;
         }
-        if (signal?.aborted) return; // cliente desconectou: nao executa mais passos
-        yield e;
+      } finally {
+        // erro ou desconexão antes do resultado: o que o provider já cobrou conta no teto
+        if (!recorded && spent.in + spent.out > 0) await record(spent.in, spent.out, Date.now() - t0);
       }
     },
   };

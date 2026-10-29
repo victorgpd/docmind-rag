@@ -93,23 +93,23 @@ describe('configuração de ranking (@docmind/config)', () => {
 describe('invalidate', () => {
   const fill = () => {
     const c = new SemanticCache<string>();
-    c.set('o1:c1', [1, 0], 'o1c1');
-    c.set('o1:c2', [1, 0], 'o1c2');
-    c.set('o1:*', [1, 0], 'o1all');
-    c.set('o2:c1', [1, 0], 'o2c1');
+    c.set('o1:c1:3@t1', [1, 0], 'o1c1');
+    c.set('o1:c2:1@t2', [1, 0], 'o1c2');
+    c.set('o1:*:4@t2', [1, 0], 'o1all');
+    c.set('o2:c1:1@t1', [1, 0], 'o2c1');
     return c;
   };
-  const alive = (c: SemanticCache<string>) => ['o1:c1', 'o1:c2', 'o1:*', 'o2:c1'].filter((k) => c.get(k, [1, 0]));
+  const alive = (c: SemanticCache<string>) => ['o1:c1:3@t1', 'o1:c2:1@t2', 'o1:*:4@t2', 'o2:c1:1@t1'].filter((k) => c.get(k, [1, 0]));
 
   it('com coleção: limpa essa coleção e as respostas sem coleção da org, nada mais', () => {
     const c = fill();
     expect(invalidate({ organizationId: 'o1', collectionId: 'c1' }, c)).toBe(2);
-    expect(alive(c)).toEqual(['o1:c2', 'o2:c1']);
+    expect(alive(c)).toEqual(['o1:c2:1@t2', 'o2:c1:1@t1']);
   });
   it('sem coleção: limpa a organização inteira e preserva as outras', () => {
     const c = fill();
     expect(invalidate({ organizationId: 'o1' }, c)).toBe(3);
-    expect(alive(c)).toEqual(['o2:c1']);
+    expect(alive(c)).toEqual(['o2:c1:1@t1']);
   });
 });
 

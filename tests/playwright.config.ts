@@ -34,7 +34,7 @@ export default defineConfig({
     {
       name: `mobile-${colorScheme}`,
       use: { ...devices['Desktop Chrome'], viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, colorScheme },
-      testMatch: /mobile.spec.ts/,
+      testMatch: /(mobile|demo-account|a11y).spec.ts/,
     },
   ]),
   webServer: [
